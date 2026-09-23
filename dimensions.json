@@ -1,0 +1,1121 @@
+{
+ "name": "ASTRAX SpaceShipTwo (VSS Unity) 客室 教育訓練シミュレーター — v1.0",
+ "files": [
+  {
+   "file": "cabin_shell.obj",
+   "objects": 208
+  },
+  {
+   "file": "pilot_seat.obj",
+   "objects": 11
+  },
+  {
+   "file": "cockpit.obj",
+   "objects": 34
+  }
+ ],
+ "placement": [
+  {
+   "part": "seat",
+   "id": "Seat_Starboard_1",
+   "label": "右舷 1列目",
+   "position": [
+    0.58,
+    0.231,
+    -0.724
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "part": "seat",
+   "id": "Seat_Starboard_2",
+   "label": "右舷 2列目",
+   "position": [
+    1.85,
+    0.231,
+    -0.724
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "part": "seat",
+   "id": "Seat_Starboard_3",
+   "label": "右舷 3列目",
+   "position": [
+    3.12,
+    0.231,
+    -0.724
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "part": "seat",
+   "id": "Seat_Port_1",
+   "label": "左舷 1列目",
+   "position": [
+    0.58,
+    0.231,
+    0.724
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "part": "seat",
+   "id": "Seat_Port_2",
+   "label": "左舷 2列目",
+   "position": [
+    1.85,
+    0.231,
+    0.724
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "part": "seat",
+   "id": "Seat_Port_3",
+   "label": "左舷 3列目",
+   "position": [
+    3.12,
+    0.231,
+    0.724
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "part": "pilot_seat",
+   "id": "PilotSeat_Starboard",
+   "label": "パイロット席（右）",
+   "position": [
+    -0.49400000000000005,
+    0.1,
+    -0.475
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "part": "pilot_seat",
+   "id": "PilotSeat_Port",
+   "label": "パイロット席（左）",
+   "position": [
+    -0.49400000000000005,
+    0.1,
+    0.475
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "part": "cockpit",
+   "id": "Cockpit",
+   "label": "コックピットの計器盤",
+   "position": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "yaw_deg": 0.0
+  }
+ ],
+ "viewpoints": {
+  "seat_starboard_1": {
+   "label": "右舷 1列目の席から",
+   "position": [
+    0.62,
+    1.091,
+    -0.724
+   ],
+   "target": [
+    -0.98,
+    1.041,
+    -0.434
+   ]
+  },
+  "seat_starboard_2": {
+   "label": "右舷 2列目の席から",
+   "position": [
+    1.89,
+    1.091,
+    -0.724
+   ],
+   "target": [
+    0.29,
+    1.041,
+    -0.434
+   ]
+  },
+  "seat_starboard_3": {
+   "label": "右舷 3列目の席から",
+   "position": [
+    3.16,
+    1.091,
+    -0.724
+   ],
+   "target": [
+    1.56,
+    1.041,
+    -0.434
+   ]
+  },
+  "seat_port_1": {
+   "label": "左舷 1列目の席から",
+   "position": [
+    0.62,
+    1.091,
+    0.724
+   ],
+   "target": [
+    -0.98,
+    1.041,
+    0.434
+   ]
+  },
+  "seat_port_2": {
+   "label": "左舷 2列目の席から",
+   "position": [
+    1.89,
+    1.091,
+    0.724
+   ],
+   "target": [
+    0.29,
+    1.041,
+    0.434
+   ]
+  },
+  "seat_port_3": {
+   "label": "左舷 3列目の席から",
+   "position": [
+    3.16,
+    1.091,
+    0.724
+   ],
+   "target": [
+    1.56,
+    1.041,
+    0.434
+   ]
+  },
+  "aisle_centre": {
+   "label": "通路の真ん中に立って",
+   "position": [
+    2.664,
+    0.95,
+    0.0
+   ],
+   "target": [
+    0.0,
+    0.8,
+    0.0
+   ]
+  },
+  "basis_top": {
+   "label": "【実写と比べる】230817_Galactic02_top.jpg と同じ画角",
+   "position": [
+    3.55,
+    1.05,
+    0.0
+   ],
+   "target": [
+    -0.6,
+    0.55,
+    0.0
+   ]
+  },
+  "basis_u22": {
+   "label": "【実写と比べる】u22_050.jpg と同じ画角（前から後ろ）",
+   "position": [
+    0.2,
+    1.1,
+    0.0
+   ],
+   "target": [
+    3.7,
+    0.7,
+    0.0
+   ]
+  },
+  "window_lower": {
+   "label": "自分の席から下の窓を見る（左舷1列目）",
+   "position": [
+    0.62,
+    1.091,
+    0.724
+   ],
+   "target": [
+    0.58,
+    1.119,
+    8.0
+   ]
+  },
+  "window_upper": {
+   "label": "自分の席から上の窓を見上げる（左舷1列目）",
+   "position": [
+    0.62,
+    1.091,
+    0.724
+   ],
+   "target": [
+    0.059,
+    10.052,
+    0.107
+   ]
+  },
+  "cam_starboard_lower1": {
+   "label": "右舷 1列目 下の窓のカメラ",
+   "position": [
+    0.785,
+    1.144,
+    -1.009
+   ],
+   "target": [
+    -2.087,
+    0.471,
+    -1.349
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_starboard_upper1": {
+   "label": "右舷 1列目 上の窓のカメラ",
+   "position": [
+    0.58,
+    1.732,
+    -0.237
+   ],
+   "target": [
+    0.58,
+    1.09,
+    -3.137
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_starboard_lower2": {
+   "label": "右舷 2列目 下の窓のカメラ",
+   "position": [
+    2.055,
+    1.144,
+    -1.009
+   ],
+   "target": [
+    -0.817,
+    0.471,
+    -1.349
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_starboard_upper2": {
+   "label": "右舷 2列目 上の窓のカメラ",
+   "position": [
+    1.85,
+    1.732,
+    -0.237
+   ],
+   "target": [
+    1.85,
+    1.09,
+    -3.137
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_starboard_lower3": {
+   "label": "右舷 3列目 下の窓のカメラ",
+   "position": [
+    3.325,
+    1.144,
+    -1.009
+   ],
+   "target": [
+    0.453,
+    0.471,
+    -1.349
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_starboard_upper3": {
+   "label": "右舷 3列目 上の窓のカメラ",
+   "position": [
+    3.12,
+    1.732,
+    -0.237
+   ],
+   "target": [
+    3.12,
+    1.09,
+    -3.137
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_port_lower1": {
+   "label": "左舷 1列目 下の窓のカメラ",
+   "position": [
+    0.375,
+    1.144,
+    1.009
+   ],
+   "target": [
+    3.247,
+    0.471,
+    1.349
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_port_upper1": {
+   "label": "左舷 1列目 上の窓のカメラ",
+   "position": [
+    0.58,
+    1.732,
+    0.237
+   ],
+   "target": [
+    0.58,
+    1.09,
+    3.137
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_port_lower2": {
+   "label": "左舷 2列目 下の窓のカメラ",
+   "position": [
+    1.645,
+    1.144,
+    1.009
+   ],
+   "target": [
+    4.517,
+    0.471,
+    1.349
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_port_upper2": {
+   "label": "左舷 2列目 上の窓のカメラ",
+   "position": [
+    1.85,
+    1.732,
+    0.237
+   ],
+   "target": [
+    1.85,
+    1.09,
+    3.137
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_port_lower3": {
+   "label": "左舷 3列目 下の窓のカメラ",
+   "position": [
+    2.915,
+    1.144,
+    1.009
+   ],
+   "target": [
+    5.787,
+    0.471,
+    1.349
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_port_upper3": {
+   "label": "左舷 3列目 上の窓のカメラ",
+   "position": [
+    3.12,
+    1.732,
+    0.237
+   ],
+   "target": [
+    3.12,
+    1.09,
+    3.137
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_aft_ceiling": {
+   "label": "後ろの天井のカメラ",
+   "position": [
+    3.586,
+    1.752,
+    0.0
+   ],
+   "target": [
+    0.6,
+    0.65,
+    0.0
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_aft_floor": {
+   "label": "後ろの床のカメラ",
+   "position": [
+    3.479,
+    -0.056,
+    0.0
+   ],
+   "target": [
+    0.8,
+    1.15,
+    0.0
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_fwd_floor": {
+   "label": "前の床のカメラ",
+   "position": [
+    -0.248,
+    0.079,
+    0.0
+   ],
+   "target": [
+    2.9,
+    1.15,
+    0.0
+   ],
+   "fov": 100,
+   "camera": true
+  },
+  "cam_ceiling_cabin": {
+   "label": "前の天井のカメラ（客室を見る）",
+   "position": [
+    0.049,
+    1.624,
+    -0.47
+   ],
+   "target": [
+    3.7,
+    -1.088,
+    0.0
+   ],
+   "fov": 90.0,
+   "camera": true
+  },
+  "cam_ceiling_cockpit": {
+   "label": "前の天井のカメラ（操縦席を見る）",
+   "position": [
+    -0.149,
+    1.648,
+    -0.415
+   ],
+   "target": [
+    -2.978,
+    0.819,
+    -0.051
+   ],
+   "fov": 90.0,
+   "camera": true
+  },
+  "aft_mirror": {
+   "label": "後ろの丸いミラーを見る（実機の特徴）",
+   "position": [
+    1.295,
+    0.92,
+    0.0
+   ],
+   "target": [
+    3.7,
+    0.77,
+    0.0
+   ]
+  },
+  "cockpit": {
+   "label": "コックピットの窓を見る（5枚）",
+   "position": [
+    0.55,
+    0.88,
+    0.0
+   ],
+   "target": [
+    -1.69,
+    0.86,
+    0.0
+   ]
+  },
+  "instructor": {
+   "label": "訓練する側の目線（6人を見渡す）",
+   "position": [
+    3.35,
+    1.3,
+    0.0
+   ],
+   "target": [
+    1.2,
+    0.35,
+    0.0
+   ]
+  },
+  "outside": {
+   "label": "外から機体全体を見る",
+   "position": [
+    5.822,
+    6.2,
+    23.836
+   ],
+   "target": [
+    5.822,
+    0.4,
+    0.0
+   ]
+  }
+ },
+ "phases": [
+  {
+   "id": "preflight",
+   "label": "離陸前（滑走路で母機と合体）",
+   "gravity": 1.0,
+   "minutes": 30,
+   "pitch_deg": 0,
+   "note": "滑走路の上。**母機イヴの中央に吊られたまま**、乗客が乗り込んで座る。ここで最終の安全説明と、ベルトの締め方の確認をする",
+   "belt": "締める",
+   "grab": false,
+   "safety": [
+    "**席と番号を覚える**（戻るときに迷わないため）",
+    "ベルト（5点ハーネス）の**外し方と締め方を、自分の手で1回やってみる**",
+    "手すりの位置と、非常口の向きを目で確かめる",
+    "ヘッドセットで交信が聞こえるか確かめる"
+   ]
+  },
+  {
+   "id": "captive",
+   "label": "母機にぶら下がって上昇",
+   "gravity": 1.0,
+   "minutes": 45,
+   "pitch_deg": 0,
+   "note": "高度約1万5千メートルまで、母機イヴに吊られて上がる。ベルトは締めたまま",
+   "belt": "締める",
+   "grab": false,
+   "safety": [
+    "ベルト（5点ハーネス）を締めたままにする",
+    "ヘッドセットで交信が聞こえるか確かめる",
+    "窓の外の景色が変わっていくのを見ておく（高度の目安になる）"
+   ]
+  },
+  {
+   "id": "release",
+   "label": "母機から切り離し",
+   "gravity": 0.0,
+   "minutes": 0,
+   "pitch_deg": -5,
+   "note": "数秒の自由落下。ここから宇宙船だけで飛ぶ",
+   "belt": "締める",
+   "grab": false,
+   "safety": [
+    "**頭を座席の背につける**。次の点火に備える",
+    "手は体の近くに置く",
+    "数秒だけ体が浮く感じがするが、ベルトは外さない"
+   ]
+  },
+  {
+   "id": "boost",
+   "label": "ロケット点火・上昇",
+   "gravity": 3.5,
+   "minutes": 1,
+   "pitch_deg": 85,
+   "note": "約60秒でほぼ真上へ。体が座席に押しつけられる（約3.5G）",
+   "belt": "締める",
+   "grab": false,
+   "safety": [
+    "**頭を座席につけたまま動かさない**（重力がかかっている間に頭を動かすと気分が悪くなる）",
+    "手は体の近く。腕を上げない",
+    "**呼吸を止めない**。ゆっくり吐く"
+   ]
+  },
+  {
+   "id": "coast",
+   "label": "無重力（約4分）",
+   "gravity": 0.0,
+   "minutes": 4,
+   "pitch_deg": 20,
+   "roll_deg": 180,
+   "note": "**VSS Unityの見せ場**。ベルトを外して座席を離れ、客室を漂って窓から地球を見る。無重力飛行機の20〜25秒×7〜8回とは性質が違う（v1は着席のまま・浮遊はv1.1）",
+   "belt": "外してよい",
+   "grab": true,
+   "safety": [
+    "**合図があってからベルトを外す**。自分の判断で外さない",
+    "**先に手すりをつかんでから**、体を座席から離す",
+    "急に動かない。ゆっくり押す・ゆっくり止まる",
+    "**戻る合図が出たら、すぐ自分の席へ**。席は覚えておく",
+    "座ってからベルトを締め、締まったか確かめる"
+   ]
+  },
+  {
+   "id": "feather",
+   "label": "羽根を立てて再突入",
+   "gravity": 6.0,
+   "minutes": 1,
+   "pitch_deg": -30,
+   "note": "座席に戻ってベルトを締める。主翼を折り上げて姿勢を安定させる。最大6G前後",
+   "belt": "締める",
+   "grab": false,
+   "safety": [
+    "**ベルトが締まっているか、もう一度確かめる**",
+    "頭を座席につけ、あごを引く",
+    "手は体の近く。ここがいちばん重力が強い（6G前後）"
+   ]
+  },
+  {
+   "id": "glide",
+   "label": "滑空して着陸",
+   "gravity": 1.0,
+   "minutes": 20,
+   "pitch_deg": -8,
+   "note": "羽根を戻し、滑空して滑走路へ",
+   "belt": "締める",
+   "grab": false,
+   "safety": [
+    "着陸までベルトは締めたまま",
+    "指示があるまで席を立たない"
+   ]
+  },
+  {
+   "id": "landed",
+   "label": "着陸後（滑走路で停止）",
+   "gravity": 1.0,
+   "minutes": 10,
+   "pitch_deg": 0,
+   "note": "**単体で滑走路に着陸し、停止した後**。母機から切り離されて飛んできたので、ここでは機体だけが滑走路の上にいる。合図があるまで座ったまま待つ",
+   "belt": "締める",
+   "grab": false,
+   "safety": [
+    "**完全に止まって、合図が出るまでベルトを外さない**",
+    "立ち上がるときは、急がずゆっくり（長く座っていたため）",
+    "手荷物は指示があってから",
+    "降りる順番はインストラクターの指示に従う"
+   ]
+  }
+ ],
+ "sky": {
+  "texture": "model/textures/sky_earth.jpg",
+  "mapping": "equirectangular",
+  "radius": 240.0,
+  "note": "窓の外の景色。球はアプリ側（three.js / Unity）で作る。窓ガラスは透明にして本物の球を見せるので、**席を移ると見える範囲が変わる**。『自分の席から何が見えるか』を確かめるのがこのアプリの目的なので、絵を窓に貼るのでなく本物の球にする"
+ },
+ "safety_note": "ここに出す手順は**一般的な目安**で、ヴァージン・ギャラクティックの公式手順ではありません。本番は運航会社とインストラクターの指示に従ってください。",
+ "dimensions": {
+  "vehicle_length": {
+   "value": 18.3,
+   "confidence": "●事実"
+  },
+  "vehicle_wingspan": {
+   "value": 8.3,
+   "confidence": "●事実"
+  },
+  "passengers": {
+   "value": 6,
+   "confidence": "●事実"
+  },
+  "windows_total": {
+   "value": 17,
+   "confidence": "●事実"
+  },
+  "windows_cabin": {
+   "value": 12,
+   "confidence": "●事実"
+  },
+  "cabin_width": {
+   "value": 2.28,
+   "confidence": "◐分析"
+  },
+  "cabin_height": {
+   "value": 1.82,
+   "confidence": "○推定"
+  },
+  "cabin_length": {
+   "value": 3.7,
+   "confidence": "●事実"
+  },
+  "widest_height": {
+   "value": 0.85,
+   "confidence": "○推定"
+  },
+  "wall_thickness": {
+   "value": 0.15,
+   "confidence": "○推定"
+  },
+  "aisle_recessed": {
+   "value": 1,
+   "confidence": "●事実"
+  },
+  "aisle_width": {
+   "value": 0.32,
+   "confidence": "◐分析"
+  },
+  "aisle_drop": {
+   "value": 0.12,
+   "confidence": "○推定"
+  },
+  "aisle_edge": {
+   "value": 0.035,
+   "confidence": "◐分析"
+  },
+  "floor_flat_to_wall": {
+   "value": 1,
+   "confidence": "◐分析"
+  },
+  "floor_chord_width": {
+   "value": 1.6,
+   "confidence": "◐分析"
+  },
+  "floor_low_y": {
+   "value": -0.2,
+   "confidence": "○推定"
+  },
+  "window_pairs_per_side": {
+   "value": 3,
+   "confidence": "◐分析"
+  },
+  "window_station_x": {
+   "value": [
+    0.58,
+    1.85,
+    3.12
+   ],
+   "confidence": "◐分析"
+  },
+  "window_clear_diameter": {
+   "value": 0.43,
+   "confidence": "◐分析"
+  },
+  "window_frame_outer": {
+   "value": 0.761,
+   "confidence": "◐分析"
+  },
+  "window_frame_height": {
+   "value": 0.045,
+   "confidence": "○推定"
+  },
+  "window_pocket_depth": {
+   "value": 0.016,
+   "confidence": "○推定"
+  },
+  "window_pocket_outer": {
+   "value": 0.8,
+   "confidence": "◐分析"
+  },
+  "window_glow_outer": {
+   "value": 0.82,
+   "confidence": "◐分析"
+  },
+  "window_glass_depth": {
+   "value": 0.048,
+   "confidence": "◐分析"
+  },
+  "window_reel_structure": {
+   "value": 1,
+   "confidence": "●事実"
+  },
+  "window_reel_flange_back": {
+   "value": 0.008,
+   "confidence": "○推定"
+  },
+  "window_reel_flange_front": {
+   "value": 0.01,
+   "confidence": "○推定"
+  },
+  "window_reel_core_diameter": {
+   "value": 0.533,
+   "confidence": "◐分析"
+  },
+  "window_led_recess": {
+   "value": 0.018,
+   "confidence": "○推定"
+  },
+  "window_led_gap_position": {
+   "value": 0.28,
+   "confidence": "○推定"
+  },
+  "window_led_width": {
+   "value": 0.01,
+   "confidence": "○推定"
+  },
+  "window_camera_clock_lower": {
+   "value": 165,
+   "confidence": "●事実"
+  },
+  "window_camera_clock_upper": {
+   "value": 90,
+   "confidence": "◐分析"
+  },
+  "aft_camera_ceiling_x": {
+   "value": 3.65,
+   "confidence": "○推定"
+  },
+  "fwd_camera_ceiling_x": {
+   "value": 0.05,
+   "confidence": "○推定"
+  },
+  "fwd_camera_floor_x": {
+   "value": -0.276,
+   "confidence": "◐分析"
+  },
+  "aft_camera_floor_x": {
+   "value": 3.55,
+   "confidence": "○推定"
+  },
+  "window_camera_length": {
+   "value": 0.175,
+   "confidence": "○推定"
+  },
+  "window_camera_stand_out_upper": {
+   "value": 0.02,
+   "confidence": "◐分析"
+  },
+  "window_camera_width": {
+   "value": 0.09,
+   "confidence": "○推定"
+  },
+  "window_camera_height": {
+   "value": 0.08,
+   "confidence": "○推定"
+  },
+  "window_camera_fov": {
+   "value": 100,
+   "confidence": "○推定"
+  },
+  "window_camera_tail_scale": {
+   "value": 0.68,
+   "confidence": "◐分析"
+  },
+  "window_pocket_flat_out": {
+   "value": 0.01,
+   "confidence": "◐分析"
+  },
+  "window_camera_stand_out": {
+   "value": 0.035,
+   "confidence": "○推定"
+  },
+  "window_camera_lens_diameter": {
+   "value": 0.04,
+   "confidence": "○推定"
+  },
+  "window_camera_lens_bulge": {
+   "value": 0.007,
+   "confidence": "○推定"
+  },
+  "window_halo_led": {
+   "value": 1,
+   "confidence": "●事実"
+  },
+  "window_lower_y": {
+   "value": 1.1192,
+   "confidence": "◐分析"
+  },
+  "window_pair_spacing_ratio": {
+   "value": 2.02,
+   "confidence": "◐分析"
+  },
+  "dome_anchor_y": {
+   "value": 1.6,
+   "confidence": "●事実"
+  },
+  "window_upper_y": {
+   "value": 1.7296,
+   "confidence": "◐分析"
+  },
+  "window_upper_z": {
+   "value": 0.68,
+   "confidence": "○推定"
+  },
+  "window_apex_clear": {
+   "value": 0.1,
+   "confidence": "◐分析"
+  },
+  "window_rim_ring": {
+   "value": 0.01,
+   "confidence": "○推定"
+  },
+  "sill_top_y": {
+   "value": 0.626,
+   "confidence": "◐分析"
+  },
+  "sill_below_window_ratio": {
+   "value": 1.14,
+   "confidence": "◐分析"
+  },
+  "sill_face_z": {
+   "value": 1.029,
+   "confidence": "○推定"
+  },
+  "sill_taper_height": {
+   "value": 0.16,
+   "confidence": "◐分析"
+  },
+  "sill_taper_run": {
+   "value": 0.16,
+   "confidence": "○推定"
+  },
+  "sill_edge_radius": {
+   "value": 0.02,
+   "confidence": "○推定"
+  },
+  "sill_replaces_wainscot": {
+   "value": 1,
+   "confidence": "◐分析"
+  },
+  "grab_bar_y": {
+   "value": 0.05,
+   "confidence": "○推定"
+  },
+  "grab_bar_length": {
+   "value": 0.7,
+   "confidence": "○推定"
+  },
+  "hatch_x": {
+   "value": 0.5,
+   "confidence": "◐分析"
+  },
+  "hatch_y": {
+   "value": 0.1,
+   "confidence": "◐分析"
+  },
+  "hatch_diameter": {
+   "value": 0.72,
+   "confidence": "◐分析"
+  },
+  "mirror_diameter": {
+   "value": 1.85,
+   "confidence": "○推定"
+  },
+  "mirror_y": {
+   "value": 0.77,
+   "confidence": "○推定"
+  },
+  "exterior_x": {
+   "value": 5.8215,
+   "confidence": "◐分析"
+  },
+  "exterior_y": {
+   "value": 0.5675,
+   "confidence": "◐分析"
+  },
+  "exterior_scale_length": {
+   "value": 1.277,
+   "confidence": "◐分析"
+  },
+  "exterior_scale": {
+   "value": 1.277,
+   "confidence": "○推定"
+  },
+  "mirror_bulge": {
+   "value": 0.14,
+   "confidence": "○推定"
+  },
+  "seat_count": {
+   "value": 6,
+   "confidence": "●事実"
+  },
+  "seat_station_x": {
+   "value": [
+    0.58,
+    1.85,
+    3.12
+   ],
+   "confidence": "◐分析"
+  },
+  "seat_centre_z": {
+   "value": 0.724,
+   "confidence": "○推定"
+  },
+  "seat_height": {
+   "value": 0.95,
+   "confidence": "○推定"
+  },
+  "seat_mount_y": {
+   "value": 0.0,
+   "confidence": "◐分析"
+  },
+  "seat_float": {
+   "value": 0.231,
+   "confidence": "○推定"
+  },
+  "seat_rail_cut": {
+   "value": 0.135,
+   "confidence": "●事実"
+  },
+  "seat_arm_wall_y": {
+   "value": 0.34,
+   "confidence": "○推定"
+  },
+  "seat_arm_seat_y": {
+   "value": 0.15,
+   "confidence": "○推定"
+  },
+  "seat_arm_size": {
+   "value": [
+    0.12,
+    0.07,
+    0.09,
+    0.045
+   ],
+   "confidence": "○推定"
+  },
+  "seat_mount_plate": {
+   "value": [
+    0.3,
+    0.12,
+    0.27
+   ],
+   "confidence": "○推定"
+  },
+  "seat_cantilever": {
+   "value": 1,
+   "confidence": "●事実"
+  },
+  "seat_recline_by_pilot": {
+   "value": 1,
+   "confidence": "●事実"
+  },
+  "cockpit_windows": {
+   "value": 5,
+   "confidence": "●事実"
+  },
+  "cockpit_window_source": {
+   "value": "model/cockpit_holes.json",
+   "confidence": "●事実"
+  },
+  "cockpit_frame_width": {
+   "value": 0.058,
+   "confidence": "◐分析"
+  },
+  "cockpit_frame_rise": {
+   "value": 0.04,
+   "confidence": "◐分析"
+  },
+  "cockpit_bevel_width": {
+   "value": 0.12,
+   "confidence": "◐分析"
+  },
+  "cockpit_length": {
+   "value": 1.3,
+   "confidence": "◐分析"
+  },
+  "pilot_seat_spacing": {
+   "value": 0.95,
+   "confidence": "○推定"
+  },
+  "eye_height_seated": {
+   "value": 0.86,
+   "confidence": "◐分析"
+  },
+  "headrest_front_dx": {
+   "value": 0.21,
+   "confidence": "◐分析"
+  },
+  "eye_forward_of_headrest": {
+   "value": 0.17,
+   "confidence": "○推定"
+  }
+ },
+ "seat_model": {
+  "file": "model/seat_tripo.glb"
+ }
+}

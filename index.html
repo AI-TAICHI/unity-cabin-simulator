@@ -1,0 +1,1965 @@
+<!DOCTYPE html>
+<html lang="ja" data-site="public" data-exterior="off">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>VSS Unity 客室 教育訓練シミュレーター</title>
+<style>
+:root{
+  --ink:#10141a; --paper:#f3f2ef; --line:#c9cbd0; --accent:#1f4e79; --warm:#b8763a;
+  --panel:rgba(248,248,246,.94);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#05070b;
+  font-family:-apple-system,"Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color:var(--ink)}
+#view{position:fixed;inset:0}
+canvas{display:block;touch-action:none}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  color:#dfe4ea;font-size:15px;letter-spacing:.06em;background:#05070b;z-index:50}
+.panel{position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:11px;
+  padding:11px 13px;backdrop-filter:blur(9px);box-shadow:0 6px 22px rgba(0,0,0,.28);z-index:20}
+h1{font-size:14px;margin:0 0 2px;letter-spacing:.02em}
+.sub{font-size:11px;color:#5a626d;margin:0 0 9px;line-height:1.5}
+.row{display:flex;flex-wrap:wrap;gap:5px}
+/* カメラの映像のボタンは、名前の長さが違っても同じ大きさに揃える（TAICHI 2026-09-22） */
+#cams button{flex:0 0 116px;width:116px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+button{font:inherit;font-size:12px;padding:5px 9px;border:1px solid var(--line);border-radius:7px;
+  background:#fff;color:var(--ink);cursor:pointer;line-height:1.3}
+button:hover{background:#eceef1}
+button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+button.ghost{background:transparent}
+.label{font-size:10.5px;color:#6a727d;margin:9px 0 4px;letter-spacing:.06em}
+#head{top:10px;left:10px;width:288px;max-height:calc(100vh - 20px);overflow:auto}
+/* ★TAICHI 2026-09-23「設定を操作するウィンドウが大きすぎる」→ 幅と字を詰めた */
+#timeline{right:10px;top:10px;width:238px;max-height:min(520px, calc(100vh - 20px));overflow:auto;
+  padding:8px 10px;font-size:11.5px}
+#timeline .label{margin:7px 0 3px;font-size:10px}
+#timeline button{font-size:11px;padding:4px 7px}
+#timeline #note{font-size:11px;line-height:1.55;margin-top:5px}
+#timeline #safety{font-size:11px;line-height:1.55}
+#timeline .led-slider{font-size:10.5px;margin:5px 0 0}
+#gauge{display:flex;align-items:baseline;gap:8px;margin:9px 0 5px}
+#gval{font-size:21px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+#gname{font-size:11px;color:#5a626d}
+#gbar{height:7px;border-radius:4px;background:#dfe1e5;overflow:hidden;margin-bottom:8px}
+#gfill{height:100%;background:linear-gradient(90deg,#4a90d9,#b8763a);width:20%;transition:width .5s}
+#note{font-size:11.5px;line-height:1.65;color:#39404a;margin-top:7px}
+#note b{color:var(--accent)}
+.chip{font-size:11px;padding:4px 9px;border-radius:7px;background:#e7ecf2;color:#1f4e79;
+  align-self:center;font-weight:600}
+.chip.off{background:#f6e6d8;color:#8a4b12}
+#safety{margin:4px 0 0;padding-left:18px;font-size:11.5px;line-height:1.7;color:#39404a}
+#safety li{margin-bottom:2px}
+#safety b{color:var(--accent)}
+/* 窓のLEDのゲージ（無重力機のシミュレーターの機器の操作と同じ作り） */
+.led-slider{display:block;margin:7px 0 0;font-size:11px;color:#39404a}
+.led-slider b{color:var(--accent);font-weight:600}
+.led-slider input[type=range]{width:100%;margin:3px 0 0}
+.led-slider input.track{-webkit-appearance:none;appearance:none;height:9px;border-radius:5px;border:1px solid var(--line);outline:none}
+.led-slider input.track::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;
+  background:#fff;border:2px solid #39404a;box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:pointer}
+.led-slider input.track::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:#fff;border:2px solid #39404a;cursor:pointer}
+#ledHue{background:linear-gradient(90deg,#f00,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,#f00)}
+.hint{font-size:10.5px;color:#767d87;line-height:1.6;margin-top:8px;border-top:1px dashed var(--line);padding-top:7px}
+#cmpWrap{position:fixed;inset:0;z-index:15;pointer-events:none;display:none}
+#cmpImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5}
+#cmpBar{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:25;
+  background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:8px 13px;display:none;
+  align-items:center;gap:10px;font-size:11.5px;box-shadow:0 6px 22px rgba(0,0,0,.28)}
+#cmpBar input{width:150px}
+/* 設定のパネルの開け閉め（TAICHI 2026-09-18「閉じるボタンがないと、設定ウィンドウを閉じることができません」）。
+   無重力機のシミュレーターと同じ：最初は閉じておき、右上の3本線で開く。開いたら右のパネルの右上の ✕ で閉じる。キーボードの H でも */
+#menu{position:fixed;top:max(10px,env(safe-area-inset-top));right:10px;z-index:30;display:none;
+  width:46px;height:46px;padding:0;border-radius:12px;background:rgba(255,255,255,.94);
+  border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.28)}
+#menu span{display:block;width:20px;height:2px;margin:4px auto;border-radius:2px;background:var(--accent)}
+#menu:hover{background:#fff}
+body.panelsHidden #menu{display:block}
+body.panelsHidden .panel,body.panelsHidden #sheet{display:none !important}
+#panelBar{position:sticky;top:-11px;z-index:1;display:flex;align-items:center;justify-content:space-between;
+  margin:-11px -13px 6px;padding:8px 10px 6px 13px;background:var(--panel);border-bottom:1px solid var(--line);
+  border-radius:11px 11px 0 0}
+#panelBar span{font-size:10.5px;color:#6a727d;letter-spacing:.06em}
+#panelClose{font-weight:600}
+#askList{max-height:190px;overflow:auto;font-size:11px;line-height:1.6}
+.ask-item{border-bottom:1px dashed var(--line);padding:5px 0;color:#39404a}
+textarea{width:100%;font:inherit;font-size:12px;padding:6px;border:1px solid var(--line);
+  border-radius:7px;resize:vertical;min-height:52px}
+@media (max-width:900px){
+  #menu{width:48px;height:48px}
+  .panel{position:fixed;left:8px;right:8px;top:8px;width:auto;max-height:calc(100vh - 16px);overflow:auto}
+  #sheet #head,#sheet #timeline{display:block;position:static;margin-bottom:8px;
+    box-shadow:none;max-height:none;width:auto}
+  #sheet #panelBar{display:none}
+  /* 出す・隠すは body.panelsHidden だけで決める（ここで display を書くと、前後の指定で打ち消し合う） */
+  #sheet{position:fixed;inset:8px;overflow:auto;background:var(--paper);
+    border:1px solid var(--line);border-radius:12px;padding:10px;z-index:22}
+  /* ✕ を float にすると、中の枠（overflow:auto で独立した箱になる）が float を避けて細くなる。
+     並べる指定にして、幅いっぱい使えるようにする（2026-09-18に 268px まで痩せていた） */
+  #close{display:block;margin:0 0 8px auto}
+  #cmpBar{left:8px;right:8px;transform:none;justify-content:center}
+}
+</style>
+</head>
+<body class="panelsHidden">   <!-- 最初は閉じておく。右上の3本線で開く（無重力機のシミュレーターと同じ） -->
+<div id="view"></div>
+<div id="loading">3Dモデルを読み込んでいます…</div>
+<div id="cmpWrap"><img id="cmpImg" alt=""></div>
+
+<button id="menu" title="設定・操作のパネルを出す（キーボードの H でも）" aria-label="設定・操作のパネルを出す"><span></span><span></span><span></span></button>
+<div id="sheet"><button id="close">✕ 閉じる</button><div id="sheetBody"></div></div>
+
+<div id="head" class="panel">
+  <h1>VSS Unity 客室シミュレーター</h1>
+  <p class="sub">ヴァージン・ギャラクティックの宇宙船ユニティ。<b>自分の席から何が見えるか</b>と、<b>当日の順序</b>を先に知るための道具です。</p>
+
+  <div class="label">どこから見るか</div>
+  <div class="row" id="views"></div>
+
+  <div class="label">カメラの映像（窓の12台＋機内の5台・広角）</div>
+  <div class="row" id="cams"></div>
+
+  <div class="label">実写と見くらべる（反証テスト）</div>
+  <div class="row" id="compares"></div>
+
+  <div class="hint" id="seatNote"></div>
+
+  <div class="label">表示</div>
+  <div class="row">
+    <button id="toggleSeats" class="on">座席</button>
+    <button id="toggleSky" class="on">窓の外</button>
+    <button id="toggleExterior" title="押すと外装（機体）だけ消える／もう一度押すと出る">外装（機体）</button>
+    <button id="toggleExteriorInside" style="display:none">中でも外装</button>
+    <button id="vr">VRで見る</button>
+  </div>
+
+  <div class="hint" id="hint"></div>
+
+  <div id="ask" hidden>
+    <div class="label">AIへの依頼（Claude Code のチャットと同じ一覧）</div>
+    <textarea id="askText" placeholder="直してほしい所・足してほしい機能を書いてください。&#10;例：下の窓がもう少し高い気がする／右の1列目から見たときの地球の見え方を確かめたい"></textarea>
+    <div class="row" style="margin-top:5px">
+      <button id="askSend">送る</button>
+      <span id="askMsg" style="font-size:11px;color:#6a727d;align-self:center"></span>
+    </div>
+    <div id="askList"></div>
+  </div>
+</div>
+
+<div id="timeline" class="panel">
+  <div id="panelBar"><span>設定・操作</span><button id="panelClose" title="パネルを閉じる（キーボードの H でも）">✕ 閉じる</button></div>
+  <div class="label">飛行の段階（押すと切り替わります）</div>
+  <div class="row" id="phases"></div>
+  <div id="gauge"><span id="gval">1.0</span><span id="gname">G（重力の大きさ）</span></div>
+  <div id="gbar"><div id="gfill"></div></div>
+  <div id="note"></div>
+
+  <div class="label">窓のLED（リールの形の枠の、つばとつばのすき間の奥）</div>
+  <div class="row">
+    <button id="ledPower" class="on">点灯中（押すと消す）</button>
+    <button id="ledAuto" title="飛行の段階ごとの色に戻す（宇宙では消灯）">段階に合わせる</button>
+  </div>
+  <label class="led-slider">明るさ　<b id="ledBrightVal">200%</b><input id="ledBright" type="range" min="0" max="200" step="5" value="200"></label>
+  <label class="led-slider">色合い（色相）　<b id="ledHueVal">205°</b><input id="ledHue" class="track" type="range" min="0" max="359" step="1" value="205"></label>
+  <label class="led-slider">白 ↔ 色　<b id="ledSatVal">白100%／色0%</b><input id="ledSat" class="track" type="range" min="0" max="100" step="5" value="0"></label>
+  <div class="hint" id="haloNote"></div>
+
+  <!-- ★窓のサイズを調整するゲージは**見えなくしてある**（TAICHI 2026-09-23
+       「窓のサイズを調整する機能は見えなくしていいです」）。
+       消してはいない：この中の部品は画面の作りが使っているので、display:none だけにしてある。
+       また出したいときは、この div の style="display:none" を外すだけ -->
+  <div id="shapeBlock" style="display:none">
+  <div class="label">窓の形（ゲージで調整）</div>
+  <div class="hint" id="shapeSummary">読み込み中…</div>
+  <div id="shapeSliders"></div>
+  <div class="row">
+    <button id="shapeSave" title="この形を model/window_tuning.json に保存し、モデル全体を作り直します（6秒ほど）">この形で保存</button>
+    <button id="shapeReset" title="調整を消して、正本の寸法に戻します">元に戻す</button>
+  </div>
+  <div class="hint" id="shapeNote">ゲージを離すと、窓だけを組み直して画面に出します（保存するまでファイルは変わりません）。</div>
+  </div>
+
+  <div class="label">ベルトと安全手順</div>
+  <div class="row" style="margin-bottom:5px">
+    <span id="beltState" class="chip"></span>
+    <!-- 手すりは 2026-09-23 にやめた（斜めの面のスリットに置き換え）。戻すときは hidden を外す -->
+    <button id="showBars" hidden>手すりを光らせる</button>
+  </div>
+  <ol id="safety"></ol>
+  <div class="hint" id="safetyNote"></div>
+
+  <div class="hint">
+    動かし方：<b>ドラッグ</b>で見回す／<b>W A S D・矢印</b>で移動／<b>Q E</b>で上下。<br>
+    スマホ・タブレット：<b>1本指</b>で見回す／<b>2本指でつまむ</b>と前後／<b>2本指でなぞる</b>と上下左右。
+  </div>
+</div>
+
+<div id="cmpBar">
+  <span id="cmpName"></span>
+  <input id="cmpOpacity" type="range" min="0" max="100" value="50">
+  <button id="cmpClose" class="ghost">やめる</button>
+</div>
+
+<script type="importmap">
+{"imports":{
+  "three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { VRButton } from "three/addons/webxr/VRButton.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { toCreasedNormals } from "three/addons/utils/BufferGeometryUtils.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+
+const $ = (id) => document.getElementById(id);
+// 外部に公開する版（make_public.py が <html data-site="public"> にする）ではサーバーに書き込む機能を出さない
+const PUBLIC_SITE = document.documentElement.dataset.site === "public";
+// ★外装（機体）は**買ってきた3Dモデル**なので、公開版には入れないことがある
+//   （make_public.py が <html data-exterior="off"> にする。2026-09-23）。
+//   入っていないのにボタンを出すと、押しても何も出ない＝壊れて見えるので、ボタンごと消す
+const NO_EXTERIOR = document.documentElement.dataset.exterior === "off";
+
+// ── 描くしくみ ───────────────────────────────────────────────
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.03, 900);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+// ★パソコンが重くならないように（TAICHI 2026-09-23）。
+//   Retina では画素が縦横2倍＝**4倍の面積**を描くことになる。1.25 までに抑える
+//   （VRヘッドセットのときは renderer.xr が別に持つので影響しない）
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.localClippingEnabled = true;     // 座席の下のレールを切り取るため（2026-09-22）
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.xr.enabled = true;
+$("view").appendChild(renderer.domElement);
+$("vr").addEventListener("click", () => {
+  const button = VRButton.createButton(renderer);
+  document.body.appendChild(button);
+  button.click();
+});
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
+scene.background = new THREE.Color(0x04060a);
+
+// VRではこの台（rig）ごと動かして移動する
+const rig = new THREE.Group();
+scene.add(rig);
+rig.add(camera);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.enableZoom = false;   // 近づくほど遅くなるので、前後は一定の速さの moveBy にする
+
+// ── 写真から作った材質（model/textures/_出典.json に出どころ） ──
+const textureLoader = new THREE.TextureLoader();
+function texture(file, repeat = [1, 1], clamp = false) {
+  const map = textureLoader.load("model/textures/" + file);
+  map.colorSpace = THREE.SRGBColorSpace;
+  map.wrapS = map.wrapT = clamp ? THREE.ClampToEdgeWrapping : THREE.RepeatWrapping;
+  map.repeat.set(repeat[0], repeat[1]);
+  map.anisotropy = 8;
+  return map;
+}
+// OBJのUVは 1.0＝1メートル。repeat は「1メートルに何枚並べるか」。
+// **材質は鏡にして2×2に並べてある**ので、1枚ぶんより小さい面に貼ると
+// 蝶のような模様が大きく出る（2026-09-18：座席の背で実際に出た）。
+// 面の大きさより細かく並ぶように、repeat は大きめにする
+const TEX = {
+  wall:   texture("wall.jpg", [3, 3]),
+  floor:  texture("floor.jpg", [3, 3]),
+  gloss:  texture("gloss.jpg", [7, 7]),
+  pocket: texture("pocket.jpg", [5, 5]),
+  // ★**背景を抜いた**実機の計器盤（TAICHI 2026-09-22「そちらで切り抜いてみて」）。
+  //   上の縁がグレアシールドの形に切ってあるので、その上には模型の本物の窓が見える
+  //   ★実写から切り抜いた版に戻すときは "cockpit_panel_cut.png" に変える
+  // ★TAICHI 2026-09-23 が作り直してくれた版（背景が透明・1875×839）。
+  //   正本 references/taichi_20260923/計器盤_ChatGPT生成_v2_20260923.webp
+  //   前の版に戻すときは "cockpit_panel_gen.png"（1875×836）に変える
+  cockpitPanel: texture("cockpit_panel_gen2.png", [1, 1]),
+  // パイロット席を**後ろから見た実物の絵**（TAICHI提供 2026-09-22）。客室から見えるのはこの面
+  seatBack: texture("pilot_seat_back.png", [1, 1]),
+  knit:   texture("knit.jpg", [26, 26]),
+  navy:   texture("navy.jpg", [5, 5]),
+  teal:   texture("teal.jpg", [4, 4]),
+  // 窓の黒枠の**後ろから漏れる光**。内が明るく外へ消える輪。1つの面に1枚ちょうど貼る
+  glow:   texture("halo_glow.jpg", [1, 1], true),
+};
+
+const M = {
+  // 殻の面は内向き（check_model.py で確認済み）。FrontSide にすると、外から見たとき手前の壁が消えて中が見える
+  wall:    new THREE.MeshStandardMaterial({ map: TEX.wall, roughness: 0.93, metalness: 0.0, side: THREE.FrontSide }),
+  floor:   new THREE.MeshStandardMaterial({ map: TEX.floor, roughness: 0.55, metalness: 0.0, side: THREE.FrontSide }),
+  gloss:   new THREE.MeshStandardMaterial({ map: TEX.gloss, roughness: 0.32, metalness: 0.02 }),
+  pocket:  new THREE.MeshStandardMaterial({ map: TEX.pocket, roughness: 0.98, metalness: 0.0, side: THREE.DoubleSide }),
+  // ガラスのすぐ外の細い縁。実写で白く見えるのは**片側だけの照り返し**で、白い輪ではない
+  // （TAICHI指摘 2026-09-18「縁の白っぽい部分も違います」＝前は太くて鏡のように白かった）
+  ring:    new THREE.MeshStandardMaterial({ color: 0x6e757d, roughness: 0.70, metalness: 0.12, side: THREE.DoubleSide }),
+  // 窓ガラスは**透明**。外の景色は本物の球を見せるので、席を移ると見える範囲が変わる
+  glass:   new THREE.MeshPhysicalMaterial({ color: 0xdfe8f0, roughness: 0.04, metalness: 0.0,
+             transmission: 0.96, thickness: 0.02, transparent: true, opacity: 0.30, side: THREE.DoubleSide }),
+  // ★TAICHI 2026-09-23「一番後ろにある鏡の写り込みが綺麗すぎるので、もう少し反射を弱めて」
+  //   → 映した絵の強さ（emissiveIntensity）を 0.62 → 0.30、面のざらつきを 0.34 → 0.55 に。
+  //   実機の鏡は凸面で、客室がぼんやり映る程度
+  //   ★2026-09-23 さらに「まだ鮮明すぎるのでもう少し曇らせて暗く」→ 0.30→0.13、
+  //   ざらつき 0.55→0.80、地の色も暗く。映す絵の粗さも 1024→256 にして自然にぼかす
+  mirror:  new THREE.MeshStandardMaterial({ color: 0x8f959c, roughness: 0.80, metalness: 0.0,
+             emissive: 0xffffff, emissiveIntensity: 0.13, side: THREE.FrontSide }),
+  // コックピットの窓枠は**濃い色でつやが強い**。実機写真（A格）では黒に近く、
+  // 明るい空が細く白く映り込んでいる（前は磨いた金属色 0xd6d9dd にしていた＝映り込みを
+  // 「金属の地の色」と読み違えていた。2026-09-22 ハリソン・フォードの実機写真で確定）
+  windowRim: new THREE.MeshStandardMaterial({ color: 0x1b1e21, roughness: 0.16, metalness: 0.40 }),
+  // 窓のまわりの斜面は**金色のアラミド繊維**（A格：飛行中の実機写真・ハリソン・フォードの写真）
+  aramid:  new THREE.MeshStandardMaterial({ color: 0xa8905a, roughness: 0.52, metalness: 0.18 }),
+  lining:  new THREE.MeshStandardMaterial({ color: 0x35383c, roughness: 0.72, metalness: 0.06 }),
+  pilotShell: new THREE.MeshStandardMaterial({ color: 0x272b30, roughness: 0.38, metalness: 0.12 }),
+  // ★殻の色は**金色（アラミド）**。TAICHI提供の絵で測った代表色 RGB(163,152,98)
+  seatShell: new THREE.MeshStandardMaterial({ color: 0xa39862, roughness: 0.52, metalness: 0.08 }),
+  seatBack: new THREE.MeshStandardMaterial({ map: TEX.seatBack, transparent: true, alphaTest: 0.5,
+    roughness: 0.60, metalness: 0.05, side: THREE.DoubleSide }),
+  rail:    new THREE.MeshStandardMaterial({ color: 0x9aa0a8, roughness: 0.4, metalness: 0.55 }),
+  metal:   new THREE.MeshStandardMaterial({ color: 0xb3b8be, roughness: 0.34, metalness: 0.8 }),
+  dark:    new THREE.MeshStandardMaterial({ color: 0x23262b, roughness: 0.55, metalness: 0.25 }),
+  knit:    new THREE.MeshStandardMaterial({ map: TEX.knit, roughness: 0.95, metalness: 0.0 }),
+  navy:    new THREE.MeshStandardMaterial({ map: TEX.navy, roughness: 0.6, metalness: 0.02 }),
+  teal:    new THREE.MeshStandardMaterial({ map: TEX.teal, roughness: 0.7 }),
+  strap:   new THREE.MeshStandardMaterial({ color: 0xd3d6da, roughness: 0.9, side: THREE.DoubleSide }),
+  screen:  new THREE.MeshStandardMaterial({ color: 0x0c1826, emissive: 0x1d4468, emissiveIntensity: 0.9, roughness: 0.25 }),
+  red:     new THREE.MeshStandardMaterial({ color: 0xb02a20, roughness: 0.45, emissive: 0x3a0a06, emissiveIntensity: 0.4 }),
+  missing: new THREE.MeshStandardMaterial({ color: 0xff00c8, roughness: 0.5 }),   // 材質の当て忘れを見つけるため
+  grabOn:  new THREE.MeshStandardMaterial({ color: 0x9fe6d8, emissive: 0x2ec4a6, emissiveIntensity: 1.2, roughness: 0.4 }),
+  // 窓の**太い黒枠**。ここがいちばん目立つ（TAICHI指摘 2026-09-18「枠の黒い部分が太いだけ」）。
+  // 真っ黒ではなく、少し青みのある濃いグレー。つや消しに近いが、丸みの頂に弱い照り返しが出る
+  // 実写（230817_Galactic02_01 の天井の窓）を中心から外へ測ると、**黒い面 48／すぐ外の壁 125**＝0.38。
+  // 真っ黒ではなく、壁の4割ほどの明るさの**濃い青みグレー**。つや消しに近い
+  // 窓の**丸みのある厚い黒い輪**（TAICHIが示した窓の写真5枚・2026-09-18夜）。黒〜濃紺で少しつやがあり、丸みに光が映る
+  // 枠と漏斗は**両面**にする。片面だと機体の外から見たとき枠と漏斗が消え、
+  // ガラスを押さえている明るい輪（両面）だけが浮いて見えた（TAICHI 2026-09-22）
+  // TAICHI 2026-09-22「窓枠の黒い部分が光沢がありすぎるので、もう少しマットな感じに」
+  // → つや 0.42→0.78、金属っぽさ 0.10→0.02（実機の黒い枠は、つやを抑えた複合材）
+  frame:   new THREE.MeshStandardMaterial({ color: 0x1d222a, roughness: 0.78, metalness: 0.02, side: THREE.DoubleSide }),
+  // 窓の**ビデオカメラの箱**（TAICHI「窓の淵にある四角いボックスのようなものはビデオカメラ」）と、レンズ
+  camera:  new THREE.MeshStandardMaterial({ color: 0x1f242c, roughness: 0.55, metalness: 0.08 }),
+  panelFace: new THREE.MeshStandardMaterial({ map: TEX.cockpitPanel, emissiveMap: TEX.cockpitPanel,
+    emissive: 0xffffff, emissiveIntensity: 0.38, roughness: 0.55, metalness: 0.08,
+    transparent: true, alphaTest: 0.5, side: THREE.FrontSide }),
+  // 前のつばの内の縁からガラスへ下る筒。実機の写真ではなめらかな濃い灰色（黒い枠と同じ材質だと、手前の電球で白っぽく光った）
+  sleeve:  new THREE.MeshStandardMaterial({ color: 0x2b3038, roughness: 0.82, metalness: 0.02, side: THREE.DoubleSide }),
+  lens:    new THREE.MeshStandardMaterial({ color: 0x05070a, roughness: 0.08, metalness: 0.55 }),
+  camWhite: new THREE.MeshStandardMaterial({ color: 0xe9ecef, roughness: 0.5, metalness: 0.05 }),   // 後ろの床のカメラの白い台
+  // 黒枠の**後ろから漏れる光**。壁の上に平らに乗せた輪に、内が明るく外へ消える絵を貼り、
+  // **足し算で重ねる**（光なので壁の色に足される）。公式：中の多色LEDが**飛行の段階ごとに色を変え、
+  // 宇宙にいる間は完全に消灯**する（地球の眺めに集中させるため）
+  // **リールのつばとつばのすき間の奥（芯）に巻いたLED**（TAICHI 2026-09-18「一番光っているところだけがLEDで、その他は反射です」）。
+  // いちばん明るい細い線。外（くぼみの壁のほう）を向くので、正面からは前のつばに隠れ、横から見たときだけ見える
+  led:     new THREE.MeshStandardMaterial({ color: 0x2a2f37, roughness: 0.5, metalness: 0.0,
+             emissive: 0x7fc9ff, emissiveIntensity: 2.2, side: THREE.DoubleSide }),
+  // すき間の面（後ろのつばの内の面・芯・前のつばの裏）：黒いが、**LEDの光を映して**その色に光る（反射なのでLEDより暗い）
+  groove:  new THREE.MeshStandardMaterial({ color: 0x1d222a, roughness: 0.42, metalness: 0.10,
+             emissive: 0x7fc9ff, emissiveIntensity: 0.45, side: THREE.DoubleSide }),
+  glow:    new THREE.MeshBasicMaterial({ map: TEX.glow, color: 0x7fc9ff, transparent: true,
+             blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.22,
+             side: THREE.FrontSide, toneMapped: false }),
+};
+
+// 名前の頭で材質を決める（前から順に見て、最初に合ったもの）
+const RULES = [
+  // 計器盤の面は**実機の写真をそのまま貼る**。"Cockpit_" のまとめ扱いより先に決める（2026-09-22）
+  ["Cockpit_PanelFace", "panelFace"],
+  ["Shell_Floor", "floor"], ["Shell_Interior", "wall"],
+  // コックピットの内張りは**客室より暗い**（A格の実機写真3枚とも、客室のベージュではなく濃いグレー）
+  // 段の蹴込みより後ろの内張りは、客室と同じ白（TAICHI 2026-09-23）。"Cockpit_Interior" より先に置く
+  ["Cockpit_InteriorAft", "wall"],
+  ["Cockpit_Interior", "lining"], ["Cockpit_NoseCap", "lining"],
+  // 操縦席が乗る**一段高い床**（TAICHI 2026-09-23）。客室の床と同じ材質
+  ["Cockpit_Step", "floor"], ["Cockpit_FloorApron", "floor"],
+  // 斜めの面のスリット（座席の調整レール）は濃い色。"Sill" のまとめ扱いより先に置く
+  // 座席の調整レール（CGでは明るい色で盛り上がった棒）
+  // 溝なので濃い色（TAICHI 2026-09-23「みぞにして」）。テーパーの前後向きのレールも同じ
+  ["Sill_TaperRail", "dark"], ["Sill_Rail", "dark"],
+  ["Floor_Rail", "rail"], ["Sill", "gloss"], ["GrabBar", "gloss"], ["Hatch", "gloss"],
+  ["Window_", null],                                  // 窓は下で細かく分ける
+  // 鏡の裏の無地の板（片面描画にしたので裏から透けないように足した）
+  ["Bulkhead_MirrorBack", "wall"],
+  // 鏡の外側の、**鏡になっていない縁**（実機にある。TAICHI 2026-09-23）。
+  // "Mirror_Aft" の規則より先に置く必要はない（名前が別）が、並べて分かるようにしておく
+  ["Mirror_Rim", "lining"],
+  ["Bulkhead_Aft", "wall"], ["Mirror_Aft", "mirror"],
+  ["Camera_Aft_Ceiling_Lens", "lens"], ["Camera_Aft_Floor_Lens", "lens"],
+  ["Camera_Fwd_Ceiling_Lens", "lens"], ["Camera_Fwd_Floor_Lens", "lens"],
+  ["Camera_Aft_Ceiling", "camera"], ["Camera_Aft_Floor", "camWhite"],
+  ["Camera_Fwd_Ceiling", "camera"], ["Camera_Fwd_Floor", "camWhite"],
+  // 座席は Tripo の GLB（自分の材質を持つ）。ここに来るのは、座席を棚に取り付ける板だけ
+  ["Seat_Mount", "metal"],
+  ["Seat_Arm", "metal"],          // 壁から座席へ伸びる斜めの腕（TAICHI 2026-09-22）
+  ["Pilot_Harness", "strap"],
+  // ★【A格】TAICHI提供の実機写真2枚（2026-09-22）：**殻は明るい暖かいグレー**で、
+  // 当て（クッション・ヘッドレスト）と帯が濃いグレー。公式CG（B格）では全部黒っぽく見えていた
+  ["Pilot_Seat_BackFace", "seatBack"],
+  ["Pilot_Seat_Shell", "seatShell"], ["Pilot_Seat_Bolster", "seatShell"],
+  ["Pilot_Seat_Pan", "seatShell"],
+  ["Pilot_Seat_Cushion", "pilotShell"], ["Pilot_Seat_Head", "pilotShell"],
+  // 背面の金具（巻き取り装置・頭当ての支え）は金属（実機写真②）
+  ["Pilot_Seat_Reel", "metal"], ["Pilot_Seat_HeadBracket", "metal"],
+  ["Pilot_Seat_Post", "metal"], ["Pilot_Seat_Leg", "metal"], ["Pilot_Seat", "dark"],
+  // コックピットの天井のカメラ：**白い箱＋黒いレンズ**（TAICHI提供のCG 2026-09-23）
+  ["Cockpit_CeilingCam_Lens", "lens"], ["Cockpit_CeilingCam", "camWhite"],
+  ["Cockpit_Display", "screen"], ["Cockpit_FireButton", "red"],
+  // 操縦桿は黒い柱、ペダルは金属の板（A格：実機コックピット写真 2026-09-22）
+  // 握りの赤いボタンは、まとめ扱い（Cockpit_Column→黒）より先に決める
+  ["Cockpit_ColumnButton", "red"],
+  ["Cockpit_Column", "dark"], ["Cockpit_Pedal_", "metal"], ["Cockpit_PedalArm", "metal"],
+  // 窓のまわり：黒に近いつやのある太枠 → 金色の斜面 → 内張り（濃いグレー）
+  ["Cockpit_Frame_", "windowRim"], ["Cockpit_Bevel_", "aramid"],
+  ["Cockpit_Window_", "glass"], ["Cockpit_", "dark"],
+];
+// ★裏から見たら絵柄が見えないようにする（TAICHI 2026-09-23）。
+//   はじめ gl_FrontFacing で裏だけ塗りつぶそうとしたが、**両面描画（DoubleSide）の
+//   透明な材質は three.js が2回に分けて描き、どちらの面でも gl_FrontFacing が true** になるため
+//   使えなかった（実際に色を出して確認）。そこで**片面描画（FrontSide）に変え、裏は描かない**。
+//   計器盤の裏はコックピットの濃い内張り、鏡の裏は後ろの隔壁なので、穴があいて見えることはない。
+
+function materialFor(name) {
+  if (name.startsWith("Window_")) {
+    if (name.endsWith("_Glass")) return M.glass;
+    if (name.endsWith("_Ring")) return M.ring;
+    if (name.endsWith("_Glow")) return M.glow;        // LEDの光がくぼみに映る（反射）
+    if (name.endsWith("_Led")) return M.led;          // 溝の奥のLED（いちばん明るい細い線）
+    if (name.endsWith("_Pocket")) return M.wall;      // 窓のまわりの壁のくぼみ（壁と同じ材質）
+    if (name.endsWith("_Sleeve")) return M.sleeve;    // ガラスへ下る筒
+    if (name.endsWith("_Groove")) return M.groove;    // 溝の壁と底（LEDの光を映す）
+    // くぼみの外の裾は、平らな壁の上で網目と重なるので**壁と同じ材質**にする（重なりが見えない）
+    if (name.endsWith("_Skirt")) return M.wall;
+    if (name.endsWith("_Camera")) return M.camera;    // ビデオカメラの箱
+    if (name.endsWith("_Lens")) return M.lens;        // レンズ
+    return M.frame;                                   // 太い黒枠。ここがいちばん目立つ
+  }
+  const rule = RULES.find(([prefix]) => prefix && name.startsWith(prefix));
+  if (rule && rule[1]) return M[rule[1]];
+  // 規則に当てはまらないものは**目立つ色**にする。壁の材質にすると、
+  // 当て忘れ（座席のボルスターが壁の色になっていた）に気づけない
+  console.warn("材質の規則に無い部品:", name);
+  return M.missing;
+}
+// 影を落とさないもの（殻と壁の付属品。落とすと室内が汚れる）
+const NO_SHADOW = /^(Shell_|Cockpit_|Window_|Sill|Bulkhead|Mirror_|GrabBar|Hatch|Floor_Rail)/;
+
+const loader = new OBJLoader();
+const load = (file) => new Promise((ok, ng) => loader.load("model/" + file, ok, undefined, ng));
+function dress(object) {
+  object.traverse((child) => {
+    if (!child.isMesh) return;
+    child.material = materialFor(child.name);
+    child.castShadow = !NO_SHADOW.test(child.name);
+    child.receiveShadow = true;
+    // OBJLoaderは面ごとに頂点を分けるので、そのままだと曲面に縞が出る。
+    // 40度より浅い折れ目だけなめらかにし、箱の角は立てたままにする
+    // 窓の黒枠は**平らな板**なので、なめらかにする角度を浅くして、
+    // 立ち上がりの丸みと平らな面の境目をはっきり残す（40度だとタイヤのように見える）
+    // カメラの箱は、後ろへ細く低くなる台形なので面がねじれる。40度だと三角形の割れ目が
+    // ×印の筋になって見えるので、なめらかにする角度を大きくする（2026-09-22）
+    const crease = /_Camera$/.test(child.name) ? 75 : 40;
+    child.geometry = toCreasedNormals(child.geometry, Math.PI * crease / 180);
+  });
+  return object;
+}
+
+// ── 読み込み ─────────────────────────────────────────────────
+const data = await fetch("dimensions.json").then((r) => r.json());
+const D = (key) => data.dimensions[key].value;
+const root = new THREE.Group();
+scene.add(root);
+
+const shell = dress(await load("cabin_shell.obj"));
+root.add(shell);
+
+const parts = {};
+for (const file of data.files.map((f) => f.file.replace(/\.obj$/, "")).filter((f) => f !== "cabin_shell")) {
+  parts[file] = dress(await load(file + ".obj"));
+}
+const placed = [];
+for (const item of data.placement) {
+  const source = parts[item.part];
+  if (!source) continue;
+  const copy = source.clone(true);
+  copy.position.set(item.position[0], item.position[1], item.position[2]);
+  copy.rotation.y = (item.yaw_deg || 0) * Math.PI / 180;
+  copy.name = item.id;
+  placed.push({ item, object: copy });
+  root.add(copy);
+}
+$("loading").remove();
+
+// ── 座席：Tripo が実機の複数写真から起こしたもの（2026-07-15） ──
+// TAICHIの決定（2026-09-18）「座席はTripoのものだけでいいです。今回作ったものは削除してもらって、切り替え機能もいりません」。
+// **1メッシュ・1材質**なので、部品ごとの色分け・ハーネスの動き・リクライニングはできない
+const tripoGroup = new THREE.Group();
+root.add(tripoGroup);
+let tripoPromise = null;       // 読み込み中・読み込み済みの約束。失敗したら null に戻してやり直せるようにする
+
+function loadTripoSeat() {
+  if (!tripoPromise) {
+    tripoPromise = loadTripoSeatOnce().catch((error) => { tripoPromise = null; throw error; });
+  }
+  return tripoPromise;
+}
+
+async function loadTripoSeatOnce() {
+  if (!data.seat_model) {                 // 公開版は、Tripo の利用条件を確かめるまで座席を入れない（make_public.py）
+    $("seatNote").textContent = "この版には座席のモデルが入っていません";
+    $("toggleSeats").hidden = true;
+    return;
+  }
+  try {
+  const gltf = await new GLTFLoader().loadAsync(data.seat_model.file);
+  const source = gltf.scene;
+  // **GLBの中の節が自分で向きと拡大率を持っている**（このモデルは −90°回転＋100倍）。
+  // 読み込んだ時点で既に Y が上になっているので、**自分の行列を重ねてはいけない**
+  // （2026-09-18：重ねて二重に回り、はみ出した箱になった）。
+  // どちらを向いているかは**モデル自身から測る**：いちばん上（ヘッドレスト）が背もたれ側
+  source.updateWorldMatrix(true, true);
+  const pile = [];
+  source.traverse((child) => {
+    if (!child.isMesh) return;
+    child.material.side = THREE.DoubleSide;   // 右舷は鏡にするので、両面を描く
+    // **座席の下のレール（車の座席のような板とすべり金具）を切り取る**
+    // （TAICHI 2026-09-22「椅子の下のレールのような部分を取り外して、壁側に斜めに付け直して」）。
+    // Tripoの座席は1つの塊なので部品として外せない。床からの高さで切る（seat_rail_cut）
+    child.material.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, 1, 0), -D("seat_rail_cut"))];
+    child.material.clipShadows = true;
+    child.castShadow = true;
+    child.receiveShadow = true;
+    const pos = child.geometry.attributes.position;
+    const point = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i += 37) {          // 間引いて測る（7万頂点あるため）
+      point.fromBufferAttribute(pos, i).applyMatrix4(child.matrixWorld);
+      pile.push([point.x, point.y, point.z]);
+    }
+  });
+  const lowY = Math.min(...pile.map((p) => p[1]));
+  const highY = Math.max(...pile.map((p) => p[1]));
+  const top = pile.filter((p) => p[1] > highY - (highY - lowY) * 0.18);
+  const mid = (a, k) => a.reduce((s, p) => s + p[k], 0) / a.length;
+  const backZ = mid(top, 2) - mid(pile, 2);
+  const backX = mid(top, 0) - mid(pile, 0);
+  // 背もたれが奥行き方向（Z）にあるなら、90°回して X に向ける。機尾（+X）が背もたれ側
+  const turn = Math.abs(backZ) > Math.abs(backX)
+    ? (backZ > 0 ? Math.PI / 2 : -Math.PI / 2)
+    : (backX > 0 ? 0 : Math.PI);
+  source.rotation.y = turn;
+  source.updateWorldMatrix(true, true);
+
+  const holder = new THREE.Group();
+  holder.add(source);
+  const box = new THREE.Box3().setFromObject(holder);
+  const size = box.getSize(new THREE.Vector3());
+  const scale = D("seat_height") / size.y;    // 実機の座席の高さに合わせる
+  for (const item of data.placement) {
+    if (!item.part.startsWith("seat")) continue;
+    const copy = holder.clone(true);
+    copy.scale.setScalar(scale);
+    if (item.position[2] < 0) copy.scale.z *= -1;        // 右舷は鏡
+    const low = new THREE.Box3().setFromObject(copy);
+    copy.position.set(item.position[0] - (low.min.x + low.max.x) / 2,
+                      item.position[1] - low.min.y,
+                      item.position[2] - (low.min.z + low.max.z) / 2);
+    copy.name = "Tripo_" + item.id;
+    tripoGroup.add(copy);
+  }
+  } catch (error) {                       // 読めなかったら、表示の「座席」を押したときにもう一度読む（loadTripoSeat が約束を捨てる）
+    console.error("座席（Tripo）を読めませんでした:", error);
+    $("seatNote").textContent = "座席のモデルを読めませんでした：" + error.message;
+    throw error;
+  }
+}
+
+// 座席は最初から読んでおく（表示の「座席」で出し入れ）
+loadTripoSeat().then(() => markSceneChanged()).catch(() => {});
+
+// ── 窓の外（本物の球。絵を窓に貼るのではない） ───────────────
+// 球そのもののUVが横長の全天周になっているので、mapping は触らない
+// （EquirectangularReflectionMapping は envMap 用で、map には効かない）
+const skyTex = texture("sky_earth.jpg", [1, 1], true);
+const sky = new THREE.Mesh(
+  new THREE.SphereGeometry(data.sky.radius, 64, 40),
+  new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, toneMapped: false })
+);
+sky.position.set(D("cabin_length") / 2, 0.8, 0);
+scene.add(sky);
+
+// ── 後ろの丸いミラー（実機の特徴） ──
+// 以前は「明るい光沢の面」で済ませていた（キューブカメラが真っ黒になったため）。
+// 原因が分かった：**鏡の板の上にカメラを置いていた**ので、6面のうち後ろ半分が
+// 後ろの壁の裏（真っ黒）を向いていた。客室側へ 0.14 m 出した所から撮ると客室が映る。
+// （TAICHI 2026-09-22「キャビンの後ろの鏡の部分にはもう少しキャビンが映っているように」）
+// 実機の鏡は**凸面**（mirror_diameter 1.70 / mirror_bulge）なので、平らな鏡（Reflector）ではなく
+// 環境マップで映す。**撮ったキューブをそのまま envMap にすると、ぼやけた光の玉にしかならない**
+// ので、PMREM を通す（2026-09-22の失敗。これが前回「真っ黒／ぼやける」と書いた本当の原因）。
+const mirrorTarget = new THREE.WebGLCubeRenderTarget(512,
+  { generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
+// 後ろの鏡は**凸面**（直径1.70・ふくらみ0.14）。環境マップでの映り込みは、
+// CubeCamera でも自前の6面でも PMREM でも**真っ黒のまま**だった（2026-09-22に切り分け済み。
+// キューブには中身が入っている＝面ごとの描画数 4/315/82/12/71/73 を確認したのに、
+// 材質側に出てこない。原因は未解明）。
+// そこで**客室を広角で1枚撮って、鏡に貼る**ことにした。凸面の鏡は、見る場所が少し動いても
+// 映る範囲がほとんど変わらないので、1枚の絵で十分それらしく見える。
+// 左右の裏返しは、鏡の貼り付け座標（build_parts.py の mirror_uv）で済ませてある。
+// ★映す絵を粗く（1024→256）すると、拡大されてぼやける＝曇った鏡になる
+//   （TAICHI 2026-09-23「もう少し曇らせて暗くして」）
+// ★256 まで粗くしたら**カクカク**になった（TAICHI 2026-09-23）。
+//   512 にして、拡大するときも**なめらかに混ぜる**設定（LinearFilter）にする。
+//   曇り具合は材質（emissiveIntensity 0.13・roughness 0.80）の方で出す
+const mirrorRT = new THREE.WebGLRenderTarget(512, 512, {
+  minFilter: THREE.LinearMipmapLinearFilter, magFilter: THREE.LinearFilter,
+  generateMipmaps: true });
+mirrorRT.texture.colorSpace = THREE.SRGBColorSpace;
+// 広角の角度：ふくらみ0.14・半径0.85 なら、縁での傾きは asin(0.85/2.65)=18.7°、
+// 反射はその倍ふれるので、映る範囲はおよそ ±37° → 画角 80°
+const mirrorView = new THREE.PerspectiveCamera(80, 1, 0.05, 24);
+let mirrorMesh = null;
+function refreshMirror() {
+  if (!mirrorMesh) mirrorMesh = root.getObjectByName("Mirror_Aft");
+  if (!mirrorMesh) return;
+  const centre = new THREE.Box3().setFromObject(mirrorMesh).getCenter(new THREE.Vector3());
+  const keep = renderer.getRenderTarget();
+  mirrorMesh.visible = false;                       // 鏡自身は映さない
+  mirrorView.position.set(centre.x - 0.10, centre.y, centre.z);
+  mirrorView.up.set(0, 1, 0);
+  mirrorView.lookAt(centre.x - 3.0, centre.y, centre.z);   // 客室のほうを向く
+  mirrorView.updateMatrixWorld(true);
+  renderer.setRenderTarget(mirrorRT);
+  renderer.render(scene, mirrorView);
+  renderer.setRenderTarget(keep);
+  mirrorMesh.visible = true;
+  if (M.mirror.map !== mirrorRT.texture) {
+    M.mirror.map = mirrorRT.texture;
+    M.mirror.emissiveMap = mirrorRT.texture;        // 鏡の映り込みは客室の光で暗くならない
+    M.mirror.needsUpdate = true;
+  }
+}
+
+let mirrorDirty = true;              // 鏡を撮り直す合図（明るさ・場面・座席の読み込みで立つ）
+function markSceneChanged() { envDirty = true; mirrorDirty = true; updateWindowLights(); }
+
+// ── 光 ───────────────────────────────────────────────────────
+// 実機の明るさは**窓の照明（LED）と、窓の外の地球の照り返し**（TAICHI 2026-09-18「天井のライトもいりません」）。
+// 説明的な平らな光にすると作り物に見える
+const ambient = new THREE.HemisphereLight(0xdfe9f5, 0x6a6660, 0.55);
+scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xfff3e2, 1.25);
+sun.position.set(1.8, 3.4, 2.6);
+sun.target.position.set(1.8, 0.2, 0);
+scene.add(sun.target, sun);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 0.3; sun.shadow.camera.far = 9;
+sun.shadow.camera.left = -3; sun.shadow.camera.right = 3;
+sun.shadow.camera.top = 3; sun.shadow.camera.bottom = -3;
+sun.shadow.bias = -0.0006; sun.shadow.radius = 4;
+
+// 窓ごとに、外の明るさの代わりの弱い光（位置はモデルのガラスから読む）
+root.updateMatrixWorld(true);
+const windowLights = [];
+root.traverse((child) => {
+  if (!child.isMesh || !/^Window_.*_Glass$/.test(child.name)) return;
+  const box = new THREE.Box3().setFromObject(child);
+  const centre = box.getCenter(new THREE.Vector3());
+  // （2026-09-18 夜に客室の中へ向けたスポットライトを試したが、TAICHIの判断「窓を元に戻して」でこの形に戻した）
+  const light = new THREE.PointLight(0xdcebff, 0.34, 2.6, 2);
+  light.position.set(centre.x, centre.y - 0.05, centre.z * 0.86);
+  scene.add(light);
+  windowLights.push(light);
+});
+// 天井の照明は無い（TAICHI 2026-09-18）。窓ごとの光は「地球の照り返し＋窓のLED」（updateWindowLights）
+const EARTH_LIGHT = new THREE.Color(0xdcebff);
+function updateWindowLights() {
+  const earth = sky.visible ? (phase && phase.id === "coast" ? 0.40 : 0.30) : 0.05;   // 窓の外の地球の照り返し
+  const lit = led.on && led.bright > 0;
+  const ledLight = ledColour().multiplyScalar(lit ? 0.17 * led.bright : 0);           // 窓のLEDがくぼみから客室を照らす（2026-09-22に 0.12→0.17）
+  for (const light of windowLights) {
+    light.color.copy(EARTH_LIGHT).multiplyScalar(earth).add(ledLight);
+    light.intensity = 1;
+  }
+  // 客室全体の明るさも LED と連動させる（TAICHI 2026-09-22「照明が消えている時はもう少し
+  // キャビン内が暗くなるように。外に明るい地球が広がっていて、その反射光だけが中に届いている感じで」）。
+  // 式は「LEDを点けた今まで通りの明るさ」（ambient 0.55 / sun 1.25）に必ず戻るように作ってある。
+  const ledMix = lit ? Math.min(1, led.bright / 2.0) : 0;                             // 既定の明るさ2.0で1になる
+  const earthMix = earth / 0.40;                                                      // 地球がいちばん明るい時に1
+  ambient.intensity = 0.04 + 0.11 * earthMix + 0.40 * ledMix;                         // 影の中の回り込み
+  sun.intensity     = 0.13 + 0.32 * earthMix + 0.80 * ledMix;                         // 窓から差し込む地球の光
+  // **いちばん効くのはここ**：客室の白い面は、光より「部屋の環境マップ」（RoomEnvironment）で
+  // 明るくなっている。three 0.160 には scene.environmentIntensity が無いので、材質ごとの
+  // envMapIntensity を動かす。これを下げないと、光だけ半分にしても見た目はほとんど暗くならない。
+  const envMix = 0.10 + 0.14 * earthMix + 0.76 * ledMix;                              // 点灯時に 1.00 へ戻る
+  if (envDirty) collectEnvMaterials();
+  for (const m of ENV_MATERIALS) m.envMapIntensity = m.userData.envBase * envMix;
+  mirrorDirty = true;                                                                 // 明るさが変わったら鏡も撮り直す
+}
+
+// 環境マップで照らされる材質を集める（座席は後から読み込まれるので、合図が立ったら集め直す）
+const ENV_MATERIALS = [];
+let envDirty = true;
+function collectEnvMaterials() {
+  ENV_MATERIALS.length = 0;
+  const seen = new Set();
+  scene.traverse((child) => {
+    if (!child.isMesh) return;
+    for (const m of (Array.isArray(child.material) ? child.material : [child.material])) {
+      if (!m || !m.isMeshStandardMaterial || m === M.mirror || seen.has(m)) continue;
+      seen.add(m);
+      if (m.userData.envBase === undefined) {
+        m.userData.envBase = (m.envMapIntensity === undefined) ? 1 : m.envMapIntensity;
+      }
+      ENV_MATERIALS.push(m);
+    }
+  });
+  envDirty = false;
+}
+
+// ── 見る場所 ─────────────────────────────────────────────────
+const target = new THREE.Vector3();
+function goTo(key) {
+  const point = data.viewpoints[key];
+  if (!point) return;
+  rig.position.set(0, 0, 0);
+  camera.fov = point.fov || 62;                       // 窓のカメラ・後ろのカメラは広角
+  camera.updateProjectionMatrix();
+  camera.position.set(point.position[0], point.position[1], point.position[2]);
+  target.set(point.target[0], point.target[1], point.target[2]);
+  controls.target.copy(target);
+  controls.update();
+  viewKey = key;
+  if (key === "outside" && !NO_EXTERIOR && !$("toggleExterior").classList.contains("on")) {
+    $("toggleExterior").classList.add("on");          // 外から見る＝機体を見る、なので外装を出す
+    if (!exteriorGroup) loadExterior().then(() => updateExteriorVisibility()).catch(() => {});
+  }
+  updateExteriorVisibility();
+  for (const button of $("views").children) button.classList.toggle("on", button.dataset.key === key);
+  for (const button of $("cams").children) button.classList.toggle("on", button.dataset.key === key);
+}
+const VIEW_ORDER = ["seat_port_1", "seat_port_2", "seat_port_3",
+                    "seat_starboard_1", "seat_starboard_2", "seat_starboard_3",
+                    "window_lower", "window_upper", "aisle_centre", "cockpit", "aft_mirror",
+                    "instructor", "outside"];
+for (const key of VIEW_ORDER) {
+  const point = data.viewpoints[key];
+  if (!point) continue;
+  const button = document.createElement("button");
+  button.textContent = point.label.replace(/（.*?）/, "").replace("【実写と比べる】", "");
+  button.title = point.label;
+  button.dataset.key = key;
+  button.addEventListener("click", () => goTo(key));
+  $("views").appendChild(button);
+}
+// 窓のカメラ12台と後ろの2台（TAICHI 2026-09-18「視点をそれぞれのカメラに切り替えられるように」）
+const CAM_ORDER = [];
+for (const side of ["port", "starboard"]) for (const level of ["lower", "upper"]) for (const row of [1, 2, 3])
+  CAM_ORDER.push("cam_" + side + "_" + level + row);
+// ★前の天井の台形カメラ（後ろ向き＝客室／前向き＝操縦席）を足した（TAICHI 2026-09-23）。
+//   天井の真ん中にあった cam_fwd_ceiling は廃止したので外してある
+CAM_ORDER.push("cam_aft_ceiling", "cam_aft_floor", "cam_fwd_floor",
+               "cam_ceiling_cabin", "cam_ceiling_cockpit");
+for (const key of CAM_ORDER) {
+  const point = data.viewpoints[key];
+  if (!point) continue;
+  const button = document.createElement("button");
+  button.textContent = point.label.replace("のカメラ", "").replace("の窓", "");
+  button.title = point.label + "（広角）";
+  button.dataset.key = key;
+  button.addEventListener("click", () => goTo(key));
+  $("cams").appendChild(button);
+}
+
+// ── 実写と見くらべる（反証テスト） ───────────────────────────
+// VSS Unity は 2024年に退役していて、新しい実測は取れない。
+// だから「実写に重ねて確かめる」ことが、寸法が正しいかを確かめる唯一の方法になる
+const COMPARES = [
+  { key: "basis_top", file: "references/05_Cabin/230817_Galactic02_top.jpg",
+    name: "実機 Galactic 02（後ろから機首を見る）" },
+  { key: "basis_u22", file: "references/frames/real_flight/u22_050.jpg",
+    name: "実機 Unity 22（前から後ろを見る）" },
+];
+for (const entry of COMPARES) {
+  const button = document.createElement("button");
+  button.textContent = entry.name.replace("実機 ", "");
+  button.title = entry.name;
+  button.addEventListener("click", () => startCompare(entry));
+  $("compares").appendChild(button);
+}
+function startCompare(entry) {
+  goTo(entry.key);
+  $("cmpImg").src = entry.file;
+  $("cmpWrap").style.display = "block";
+  $("cmpBar").style.display = "flex";
+  $("cmpName").textContent = entry.name;
+  $("cmpImg").style.opacity = $("cmpOpacity").value / 100;
+}
+$("cmpOpacity").addEventListener("input", (e) => { $("cmpImg").style.opacity = e.target.value / 100; });
+$("cmpClose").addEventListener("click", () => {
+  $("cmpWrap").style.display = "none";
+  $("cmpBar").style.display = "none";
+});
+
+// ── 飛行の段階 ───────────────────────────────────────────────
+let phase = data.phases[0];
+
+const bold = (text) => text.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+
+// 窓の黒枠の**後ろから漏れる光**の色。公式：**飛行の段階ごとに色が変わり、宇宙にいる間は完全に消灯**する
+// （地球の眺めに集中させるため）。離脱までは落ち着いた色、ロケット点火では鮮やかな色
+const HALO_COLOUR = {
+  captive: [0x7fc9ff, 0.75],   // 母機で上昇：落ち着いた青
+  release: [0x9ad8ff, 0.9],    // 切り離し
+  boost:   [0xff8a3d, 1.5],    // 点火：鮮やかな色
+  coast:   [0x000000, 0.0],    // **無重力＝消灯**（地球の眺めに集中）
+  feather: [0xffb25e, 1.2],    // 再突入
+  glide:   [0x8fd4ff, 0.7],    // 滑空
+};
+
+// ── 窓のLED（TAICHI 2026-09-18「設定パネルに、LEDのオンオフスイッチや明るさや色合いを調整するゲージをつけてください」） ──
+// ・いちばん明るいのは**溝の奥のLEDの細い線**。溝の壁とくぼみは、その光の**反射**（TAICHI「その他は反射です」）
+// ・「段階に合わせる」：公式どおり段階ごとの色（宇宙では消灯）。ボタンやゲージを触ると手動になる
+// ・色は「色合い（色相）」と「白↔色」で決める。白↔色が 0% なら白、100% ならその色そのもの
+// 初めの値は TAICHI 2026-09-22 の指示：**点灯・明るさ200%・白100%**。
+// 「段階に合わせる」は**最初は切ってある**（入れると、公式どおり段階ごとの色と明るさに変わり、宇宙では消灯する）
+const led = { auto: false, on: true, bright: 2.0, hue: 205, sat: 0.0 };
+const LED_OFF = new THREE.Color(0x000000);
+
+function ledFromPhase(item) {
+  const [colour, strength] = HALO_COLOUR[item.id] || [0x7fc9ff, 0.8];
+  led.on = strength > 0;
+  if (!led.on) return;                                  // 消灯の段階は、色はそのまま（次に点けたとき同じ色）
+  const hsl = new THREE.Color(colour).getHSL({}, THREE.SRGBColorSpace);   // 画面の色（sRGB）で読む。内部の色で読むと色相がずれた
+  led.hue = Math.round(hsl.h * 360) % 360;
+  led.sat = Math.min(1, Math.max(0, 2 * (1 - hsl.l)));
+  led.bright = strength;
+}
+
+function ledColour() {
+  return new THREE.Color().setHSL(led.hue / 360, 1, 1 - led.sat / 2, THREE.SRGBColorSpace);
+}
+
+function applyLed() {
+  const lit = led.on && led.bright > 0;
+  const colour = ledColour();
+  M.led.emissive.copy(lit ? colour : LED_OFF);
+  M.led.emissiveIntensity = 3.8 * led.bright;          // いちばん明るい（芯は白っぽく飛ぶ）。2026-09-22に 2.2→3.8
+  M.groove.emissive.copy(lit ? colour : LED_OFF);
+  M.groove.emissiveIntensity = 0.55 * led.bright;      // 溝の壁：反射なのでLEDより暗い。2026-09-22に 0.45→0.55
+  M.glow.color.copy(colour);
+  // くぼみと**その外の壁**へ広がる反射。TAICHI 2026-09-22「周りの壁まで届くように」
+  // → 広がり（window_glow_outer）を 0.82→0.97m にしたうえで、濃さも 0.30→0.46 に上げた
+  M.glow.opacity = Math.min(0.78, 0.34 * led.bright);
+  M.glow.visible = lit;
+  updateWindowLights();                                 // 窓のLEDは客室も照らす
+  // ゲージとボタンの表示をそろえる
+  $("ledPower").classList.toggle("on", led.on);
+  $("ledPower").textContent = led.on ? "点灯中（押すと消す）" : "消灯中（押すと点ける）";
+  $("ledAuto").classList.toggle("on", led.auto);
+  $("ledBright").value = Math.round(led.bright * 100);
+  $("ledBrightVal").textContent = Math.round(led.bright * 100) + "%";
+  $("ledHue").value = led.hue;
+  $("ledHueVal").textContent = led.hue + "°";
+  $("ledSat").value = Math.round(led.sat * 100);
+  $("ledSatVal").textContent = "白" + Math.round((1 - led.sat) * 100) + "%／色" + Math.round(led.sat * 100) + "%";
+  $("ledSat").style.background = "linear-gradient(90deg,#fff,hsl(" + led.hue + ",100%,50%))";
+  const note = led.auto
+    ? (led.on ? "窓のLED：**この段階の色**（段階に合わせる）。いちばん明るい細い線がLEDで、まわりの光はその**反射**です"
+              : "窓のLED：**宇宙では消灯**（段階に合わせる）。地球の眺めに集中させるためです")
+    : "窓のLED：**手で調整中**（初めの設定は**明るさ200%・白100%**）。「段階に合わせる」を押すと、その段階の色に戻ります";
+  $("haloNote").innerHTML = bold(note);
+}
+
+function setLed(change) {
+  Object.assign(led, change, { auto: false });
+  applyLed();
+}
+$("ledPower").addEventListener("click", () => setLed({ on: !led.on }));
+$("ledAuto").addEventListener("click", () => { led.auto = true; ledFromPhase(phase); applyLed(); });
+$("ledBright").addEventListener("input", (e) => setLed({ bright: Number(e.target.value) / 100, on: Number(e.target.value) > 0 }));
+$("ledHue").addEventListener("input", (e) => setLed({ hue: Number(e.target.value) }));
+$("ledSat").addEventListener("input", (e) => setLed({ sat: Number(e.target.value) / 100 }));
+
+// ── 窓の形の調整（TAICHI 2026-09-22「幅だけでなく、角度、奥行きなども調整できるように」） ──
+// ゲージを離すと**窓12個だけ**を組み直して差し替える（全部を作り直すと6秒、窓だけなら1秒）。
+// 「この形で保存」を押すまで、model/ のファイルは変わらない。
+const shape = { values: {}, busy: false, again: null, timer: 0 };
+
+// 画面のゲージ（cm）と、正本の寸法（m）のつなぎ。
+// 黒・グレー・縁はどれも「ガラスの縁〜黒い輪の外」を分け合うので、1つ動かすとほかの表示も変わる
+const SHAPE_UI = [
+  { id: "outer",  label: "黒い輪の外径",              min: 55,  max: 95, step: 0.5,
+    get: (v) => v.window_frame_outer * 100,
+    set: (v, x) => { v.window_frame_outer = x / 100; } },
+  { id: "black",  label: "濃い黒の帯の幅",            min: 2,   max: 25, step: 0.2,
+    get: (v) => (v.window_frame_outer - v.window_reel_core_diameter) * 50,
+    set: (v, x) => { v.window_reel_core_diameter = v.window_frame_outer - x / 50; } },
+  { id: "grey",   label: "グレー（漏斗）の幅",        min: 0.5, max: 20, step: 0.2,
+    get: (v) => (v.window_reel_core_diameter - v.window_clear_diameter) * 50 - v.window_rim_ring * 100,
+    set: (v, x) => { v.window_reel_core_diameter = v.window_clear_diameter + v.window_rim_ring * 2 + x / 50; } },
+  { id: "rim",    label: "明るい縁の幅",              min: 0.2, max: 4,  step: 0.1,
+    get: (v) => v.window_rim_ring * 100,
+    set: (v, x) => { v.window_rim_ring = x / 100; } },
+  { id: "height", label: "枠の高さ（客室へ出る厚み）", min: 1.5, max: 8,  step: 0.1,
+    get: (v) => v.window_frame_height * 100,
+    set: (v, x) => { v.window_frame_height = x / 100; } },
+  { id: "depth",  label: "ガラスの奥行き",            min: 1.5, max: 11, step: 0.1,
+    get: (v) => v.window_glass_depth * 100,
+    set: (v, x) => { v.window_glass_depth = x / 100; } },
+  { id: "clear",  label: "ガラス（見える所）の直径",  min: 30,  max: 60, step: 0.5,
+    get: (v) => v.window_clear_diameter * 100,
+    set: (v, x) => { v.window_clear_diameter = x / 100; } },
+];
+
+function shapeNumbers(v) {
+  const outer = v.window_frame_outer / 2, core = v.window_reel_core_diameter / 2;
+  const clear = v.window_clear_diameter / 2, rim = v.window_rim_ring;
+  const grey = core - (clear + rim), band = outer - clear || 1;
+  return {
+    blackPct: (outer - core) / band * 100, greyPct: grey / band * 100, rimPct: rim / band * 100,
+    // 漏斗のいちばん急な所。漏斗は**枠の面からガラスの面まで**ひと続きに下りる（形は 1 − t²）
+    angle: grey > 0.002
+      ? Math.atan(2 * (v.window_frame_height + v.window_glass_depth - D("window_pocket_depth")) / grey) * 180 / Math.PI
+      : 90,
+    depth: v.window_frame_height + v.window_glass_depth - D("window_pocket_depth"),
+  };
+}
+
+function shapeSync() {
+  for (const item of SHAPE_UI) {
+    const input = $("shape_" + item.id);
+    if (!input) continue;
+    const now = item.get(shape.values);
+    input.value = now.toFixed(2);
+    $("shapeVal_" + item.id).textContent = now.toFixed(1) + " cm";
+  }
+  const n = shapeNumbers(shape.values);
+  $("shapeSummary").innerHTML = bold(
+    "黒 **" + Math.round(n.blackPct) + "%** ／ グレー **" + Math.round(n.greyPct) + "%** ／ 縁 **" +
+    Math.round(n.rimPct) + "%**　　漏斗のいちばん急な所 **" + Math.round(n.angle) + "°**　　" +
+    "黒い枠の面からガラスまで **" + (n.depth * 100).toFixed(1) + " cm**");
+}
+
+function replaceWindows(text, views) {
+  const fresh = dress(loader.parse(text));
+  const old = [];
+  shell.traverse((child) => { if (child.isMesh && /^Window_/.test(child.name)) old.push(child); });
+  for (const child of old) { child.parent.remove(child); child.geometry.dispose(); }
+  for (const child of fresh.children.slice()) shell.add(child);
+  for (const key in (views || {})) data.viewpoints[key] = views[key];
+  applyLed();                                         // 新しいLEDの帯にも今の明るさ・色を当てる
+}
+
+async function shapeSend(save) {
+  if (shape.busy) { shape.again = save ? "save" : "live"; return; }
+  shape.busy = true;
+  $("shapeNote").textContent = save ? "作り直しています…（6秒ほどかかります）" : "窓を組み直しています…";
+  try {
+    const answer = await fetch("/api/window_shape", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ values: shape.values, save: !!save }) });
+    const got = await answer.json();
+    if (!answer.ok || !got.ok) throw new Error(got.error || ("サーバが " + answer.status));
+    shape.values = got.values;
+    replaceWindows(got.obj, got.viewpoints);
+    shapeSync();
+    $("shapeNote").textContent = save
+      ? "保存しました。model/ を作り直したので、次に開いたときもこの形です"
+      : "ゲージを離すと、窓だけを組み直して画面に出します（保存するまでファイルは変わりません）";
+  } catch (error) {
+    $("shapeNote").textContent = "うまくいきませんでした：" + error.message;
+  }
+  shape.busy = false;
+  if (shape.again) { const next = shape.again; shape.again = null; shapeSend(next === "save"); }
+}
+
+async function shapeBoot() {
+  let state;
+  if (PUBLIC_SITE) {               // 公開版は server.py が無いので、窓の形の調整は出さない
+    $("shapeSummary").textContent = "（この画面では調整できません）";
+    $("shapeSliders").innerHTML = ""; return;
+  }
+  try {
+    state = await fetch("/api/window_shape").then((r) => r.json());
+  } catch (error) {
+    $("shapeSummary").textContent = "（この画面では調整できません。server.py から開いてください）";
+    $("shapeSliders").innerHTML = ""; return;
+  }
+  for (const item of state.items) shape.values[item.key] = item.value;
+  $("shapeSliders").innerHTML = SHAPE_UI.map((item) =>
+    '<label class="led-slider">' + item.label + '　<b id="shapeVal_' + item.id + '"></b>' +
+    '<input id="shape_' + item.id + '" type="range" min="' + item.min + '" max="' + item.max +
+    '" step="' + item.step + '" value="0"></label>').join("");
+  for (const item of SHAPE_UI) {
+    $("shape_" + item.id).addEventListener("input", (e) => {
+      item.set(shape.values, Number(e.target.value));
+      shapeSync();
+      clearTimeout(shape.timer);
+      shape.timer = setTimeout(() => shapeSend(false), 260);   // 指を離してから組み直す
+    });
+  }
+  shapeSync();
+  if (state.tuned) $("shapeNote").textContent = "いまは調整した形です（model/window_tuning.json）。「元に戻す」で正本の寸法に戻ります";
+}
+
+$("shapeSave").addEventListener("click", () => shapeSend(true));
+$("shapeReset").addEventListener("click", () => {
+  for (const item of SHAPE_UI) { /* 値は空で送る＝正本に戻す */ }
+  shape.values = {};
+  shapeSend(true).then(shapeSync);
+});
+shapeBoot();
+
+function setPhase(next) {
+  phase = next;
+  $("gval").textContent = next.gravity.toFixed(1);
+  $("gfill").style.width = Math.min(100, 8 + next.gravity * 15) + "%";
+  $("note").innerHTML = "<b>" + next.label + "</b>（およそ" + next.minutes + "分）<br>" + bold(next.note);
+  // ベルトと安全手順（訓練する側・受ける側の両方が使う）
+  const belt = $("beltState");
+  belt.textContent = "ベルト：" + next.belt;
+  belt.classList.toggle("off", next.belt !== "締める");
+  $("safety").innerHTML = (next.safety || []).map((step) => "<li>" + bold(step) + "</li>").join("");
+  showBars(!!next.grab);      // 無重力の段階だけ自動で光る（ほかの段階に移ると消える）
+  if (led.auto) ledFromPhase(next);                   // 手で変えていなければ、段階の色にする
+  applyLed();
+  updateWindowLights();
+  // 機体の姿勢。客室はそのままで、外の景色のほうを回す（中にいる人の見え方と同じ）
+  // roll_deg は**背面飛行**（無重力の間だけ 180°）。地球が天井側に来る
+  sky.rotation.x = (next.roll_deg || 0) * Math.PI / 180;
+  sky.rotation.z = next.pitch_deg * Math.PI / 180;
+  // 光は動かさない。**明るい地球は天井側**にあるので、光は今までどおり上から来るのが正しい
+  // （2026-09-22に一度、太陽を下へ回して天井に座席の影が落ちる絵になった。すぐ戻した）
+  mirrorDirty = true;
+  updateGear();                                        // 滑走路の段階だけ車輪を出す
+  for (const button of $("phases").children) button.classList.toggle("on", button.dataset.id === next.id);
+}
+for (const item of data.phases) {
+  const button = document.createElement("button");
+  button.textContent = item.label.replace(/（.*?）/, "");
+  button.title = item.label;
+  button.dataset.id = item.id;
+  button.addEventListener("click", () => setPhase(item));
+  $("phases").appendChild(button);
+}
+
+// ── 手すりを光らせる（無重力のとき「先に手すりをつかむ」ため） ──
+const grabBars = [];
+root.traverse((child) => { if (child.isMesh && /^GrabBar_/.test(child.name)) grabBars.push(child); });
+let barsOn = false;
+function showBars(on) {
+  barsOn = on;
+  for (const bar of grabBars) {
+    bar.material = on ? M.grabOn : materialFor(bar.name);
+  }
+  $("showBars").classList.toggle("on", on);
+}
+$("showBars").addEventListener("click", () => showBars(!barsOn));
+
+// ── 表示の切り替え ───────────────────────────────────────────
+$("toggleSeats").addEventListener("click", (e) => {
+  const on = !e.target.classList.contains("on");
+  e.target.classList.toggle("on", on);
+  tripoGroup.visible = on;
+  if (on) loadTripoSeat().then(() => markSceneChanged()).catch(() => {});          // 読めていなかったら、もう一度読む
+});
+// 買った外装（model/exterior.glb・17MB）。重いので**押されたときに初めて読む**
+let exteriorGroup = null, exteriorLoading = null, viewKey = null;
+function loadExterior() {
+  if (exteriorLoading) return exteriorLoading;
+  // 買ったままの外装を、**まるごと exterior_scale 倍**にして使う（TAICHI 2026-09-22
+  // 「胴体だけでなく、翼など全体を拡大してください」）。倍率は窓が客室の壁にのる条件から解いた 1.2770。
+  // 胴体だけ太らせた版（exterior_fat.glb）は使わない
+  const windowsReady = fetch("model/exterior_windows.json").then(r => r.json()).catch(() => []);
+  exteriorLoading = Promise.all([new GLTFLoader().loadAsync("model/exterior.glb"), windowsReady])
+      .then(([gltf, exteriorWindows]) => {
+    exteriorGroup = gltf.scene;
+    // Blender は Z が上・長さが Y（機首が -Y）。glTF で Y-up になっているので、
+    // Y まわりに -90° 回すと、機尾が +X（客室と同じ向き）になる
+    exteriorGroup.rotation.y = -Math.PI / 2;
+    // 断面（幅・高さ）と長さで倍率が違う。買った外装は**断面だけが1.277倍ぶん小さく、全長は正しい**
+    const kc = D("exterior_scale"), kl = D("exterior_scale_length");
+    exteriorGroup.scale.set(kc, kc, kl);     // 回す前の軸：x=横・y=上・z=長さ
+    exteriorGroup.position.set(D("exterior_x"), D("exterior_y"), 0);
+    exteriorGroup.updateWorldMatrix(true, true);
+    openWindows(exteriorGroup, exteriorWindows);
+    const hullTargets = [];
+    exteriorGroup.traverse((child) => { if (child.isMesh && child.name === "body") hullTargets.push(child); });
+    smoothWindowRims(exteriorWindows, hullTargets);
+    exteriorGroup.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = false; child.receiveShadow = false;
+        // ★外装（買ったモデル）の内側の面と、こちらの内張りが**ほぼ同じ高さ**にある所（天井の
+        //   客室とコックピットの境目）で、どちらが前か決まらず**白いギザギザの斑**が出ていた
+        //   （TAICHI 2026-09-23「元々天井にあったカメラの両横にある白い出っ張りみたいなものは？」）。
+        //   外装の材質を**少し奥へ押し下げて**、内張りが必ず手前になるようにする
+        for (const material of (Array.isArray(child.material) ? child.material : [child.material])) {
+          if (!material) continue;
+          // ★天井で、外装の内側の面とこちらの内張りがほぼ同じ高さにあり、**平らな多角形の斑**が
+          //   出ていた（TAICHI 2026-09-23）。**押し下げる量を大きく**すると消える。
+          //   ★一度 FrontSide（裏を描かない）にしたが、それだと**窓の穴の縁がボサボサ**になった
+          //   （TAICHI 2026-09-23「なぜ窓の縁がボサボサした感じになってるの？」）。
+          //   窓の縁は外装の内側の面が見えていて当たり前なので、**両面のまま押し下げる**のが正解。
+          material.polygonOffset = true;
+          material.polygonOffsetFactor = 12;
+          material.polygonOffsetUnits = 12;
+          material.side = THREE.DoubleSide;
+        }
+      }
+      if (child.isMesh && child.name !== "flame") paintLivery(child);
+    });
+    addDecals(exteriorGroup);
+    scene.add(exteriorGroup);
+    updateExteriorVisibility();
+    if (window.__requestRender) window.__requestRender();
+    return exteriorGroup;
+  });
+  return exteriorLoading;
+}
+
+// ★起動したらすぐ、裏で外装を読み込んでおく（17MBあるので押してから読むと20秒待つことになる）。
+//   読み終わったら「外装（機体）」ボタンの on/off どおりに出す
+setTimeout(() => {
+  if (NO_EXTERIOR) return;         // 外装が入っていない版では読みに行かない（404になるだけ）
+  $("toggleExterior").classList.add("on");
+  loadExterior().then(() => updateExteriorVisibility())
+    .catch((error) => console.error("外装の読み込みに失敗:", error));
+}, 400);
+// ── 外装の「窓をふさいでいるふた」を取り除く ──────────────────────
+// ★買った外装モデルは、17個の窓が**穴ではなく、少しふくらんだ板でふさがれている**。
+//   その板は胴体（body）と同じメッシュの中にあるので、塗装もそのまま乗り、
+//   外から見ると**窓が白く塗りつぶされて見えた**（TAICHI 2026-09-22）。
+//   窓の輪は probe_exterior_holes.py --windows で実測して model/exterior_windows.json にある。
+//   その輪の中に入る三角だけを取り除くと、本当の穴になり、中の客室が透けて見える。
+// ★外装の窓の穴の縁が**カクカク**していた（TAICHI 2026-09-23「滑らかな円にできないの？」）。
+//   買った外装は面が粗く、ふさいでいた板を三角ごと取り除くので、縁が多角形になる。
+//   **穴の縁に、滑らかな円の輪（64分割）をかぶせて**隠す。輪は窓の面の上に置く
+//   （窓ごとに中心・法線・縦横の向き・輪郭が model/exterior_windows.json に測ってある）。
+// ★外装の窓の穴の縁が**カクカク**している（TAICHI 2026-09-23「滑らかな円にできないの？」）。
+//   正体は**買った外装モデルそのものの窓枠が12角形**であること（こちらが切った跡ではない）。
+//   直し方：**穴の縁に「滑らかな漏斗（ファンネル）」をかぶせる**。
+//     ・内側の縁 … 窓の面の上の**きれいな円**（穴は平らに切られているので、面の上に取れば必ず滑らか）
+//     ・外側の縁 … **窓の面の法線に沿って外から光線を当てて外板の上**に置く（胴体の丸みに乗る）
+//   これで、12角形の縁はこの漏斗の下に隠れる。
+//   ★2026-09-23に一度失敗した作り方（やり直さないこと）：
+//     ①平らな輪 → 胴体が丸いので浮いて三日月に見えた
+//     ②内側も外側も**機体の軸から**光線を当てた → 穴の中は当たらず形が崩れた
+//   ★**戻したいとき**は、すぐ下の SMOOTH_WINDOW_RIMS を false にするだけ。
+//     （まるごと前の版に戻すなら _バックアップ/index_窓の縁を作り直す前_20260923.html）
+// ★2026-09-23：3通り試したが、どれも**かえって悪く**なった（灰色の輪が胴体に出る／
+//   カクカクの縁はこの輪より内側にあって隠せない）。TAICHIの了解どおり **false に戻した**。
+//   きちんと直すには外装モデルの窓枠そのものを作り直すしかない。
+const SMOOTH_WINDOW_RIMS = false;
+const rimWhite = new THREE.MeshStandardMaterial({ color: 0xeff1f3, roughness: 0.32, metalness: 0.10,
+                                                  side: THREE.DoubleSide });
+const windowRims = [];
+function smoothWindowRims(windows, targets) {
+  if (!SMOOTH_WINDOW_RIMS || !windows || !windows.length) return;
+  const ray = new THREE.Raycaster();
+  const segments = 72;
+  for (const w of windows) {
+    let near = Infinity, far = 0;
+    for (const [fu, fv] of w.flat) {
+      const d = Math.hypot(fu, fv);
+      if (d < near) near = d;
+      if (d > far) far = d;
+    }
+    if (!isFinite(near) || far <= 0) continue;
+    const uu = new THREE.Vector3(...w.u), vv = new THREE.Vector3(...w.v);
+    const nn = new THREE.Vector3(...w.normal).normalize();
+    const centre = new THREE.Vector3(...w.centre);
+    const innerR = near * 0.985;                 // 穴のいちばん狭い所のすぐ内側
+    const outerR = far * 1.34;                   // 12角形の縁の外まで
+    const inner = [], outer = [];
+    for (let k = 0; k <= segments; k++) {
+      const angle = 2 * Math.PI * k / segments;
+      const dir = uu.clone().multiplyScalar(Math.cos(angle))
+                    .addScaledVector(vv, Math.sin(angle));
+      // 内側＝窓の面の上のきれいな円。少しだけ外へ浮かせて、元の縁より手前に出す
+      inner.push(centre.clone().addScaledVector(dir, innerR).addScaledVector(nn, 0.006));
+      // 外側＝**窓の面の法線に沿って**外から光線を当てて、外板の上に落とす
+      const flat = centre.clone().addScaledVector(dir, outerR);
+      ray.set(flat.clone().addScaledVector(nn, 1.2), nn.clone().negate());
+      const hit = targets && targets.length ? ray.intersectObjects(targets, false)[0] : null;
+      outer.push(hit ? hit.point.clone().addScaledVector(nn, 0.004)
+                     : flat.clone().addScaledVector(nn, 0.004));
+    }
+    const position = [], index = [];
+    for (const p of inner) position.push(p.x, p.y, p.z);
+    for (const p of outer) position.push(p.x, p.y, p.z);
+    const row = segments + 1;
+    for (let k = 0; k < segments; k++) {
+      index.push(k, row + k, k + 1, k + 1, row + k, row + k + 1);
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
+    geometry.setIndex(index);
+    geometry.computeVertexNormals();
+    const rim = new THREE.Mesh(geometry, rimWhite);
+    rim.castShadow = rim.receiveShadow = false;
+    scene.add(rim);
+    windowRims.push(rim);
+  }
+}
+
+function openWindows(group, windows) {
+  if (!windows || !windows.length) return;
+  // ★買った外装モデルは、17個の窓の穴が**外へふくらんだ板**でふさがれていて、
+  //   胴体と同じ白い塗装が乗るため、外から見ると窓が白く塗りつぶされて見えた
+  //   （TAICHI 2026-09-22「なぜ窓が白く塗りつぶされているのですか？」）。
+  //   判定のしかたで2回失敗した（どちらも**絵で見て**分かった）：
+  //     ・三角の重心で判定 → 穴の下半分を覆う大きな板が残った
+  //     ・三角の頂点で判定 → 低ポリの胴体の大きな三角が巻き添えで消え、横一直線に穴が空いた
+  //   正しい判定は「**窓の内側の点を覆っているか**」。穴の内側は本来なにも無いので、
+  //   そこを覆う三角＝ふさいでいる板。胴体の大きな三角は穴の内側を覆わないので残る。
+  const targets = windows.map((w) => {
+    const samples = [[0, 0]];
+    for (let k = 0; k < 12; k++) {
+      const angle = 2 * Math.PI * k / 12;
+      const dirU = Math.cos(angle), dirV = Math.sin(angle);
+      // その向きの輪の半径を測って、その 0.3 / 0.6 / 0.85 の所を見る
+      let reach = w.radius;
+      for (let i = 0, j = w.flat.length - 1; i < w.flat.length; j = i++) {
+        const [x1, y1] = w.flat[j], [x2, y2] = w.flat[i];
+        const denominator = dirU * (y2 - y1) - dirV * (x2 - x1);
+        if (Math.abs(denominator) < 1e-9) continue;
+        const t = (x1 * (y2 - y1) - y1 * (x2 - x1)) / denominator;
+        if (t <= 0) continue;
+        const along = ((t * dirU - x1) * (x2 - x1) + (t * dirV - y1) * (y2 - y1))
+                    / ((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+        if (along >= 0 && along <= 1) { reach = Math.min(reach, t); }
+      }
+      for (const fraction of [0.30, 0.60, 0.85]) {
+        samples.push([dirU * reach * fraction, dirV * reach * fraction]);
+      }
+    }
+    return { centre: w.centre, normal: w.normal, u: w.u, v: w.v, radius: w.radius, samples: samples };
+  });
+  const probe = new THREE.Vector3();
+  group.traverse((mesh) => {
+    if (!mesh.isMesh || !mesh.geometry || !mesh.geometry.attributes.position) return;
+    const geometry = mesh.geometry;
+    const position = geometry.attributes.position;
+    const index = geometry.index ? Array.from(geometry.index.array) : null;
+    const count = index ? index.length : position.count;
+    const keep = [];
+    let dropped = 0;
+    const corner = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    for (let i = 0; i + 2 < count; i += 3) {
+      const triangle = [index ? index[i] : i, index ? index[i + 1] : i + 1, index ? index[i + 2] : i + 2];
+      for (let k = 0; k < 3; k++) {
+        probe.fromBufferAttribute(position, triangle[k]).applyMatrix4(mesh.matrixWorld);
+        corner[k][0] = probe.x; corner[k][1] = probe.y; corner[k][2] = probe.z;
+      }
+      if (coversAnyWindow(corner, targets)) { dropped++; continue; }
+      keep.push(triangle[0], triangle[1], triangle[2]);
+    }
+    if (dropped) {
+      geometry.setIndex(keep);
+      console.log("外装 " + mesh.name + "：窓をふさいでいた板を " + dropped + " 枚 外した");
+    }
+  });
+}
+function coversAnyWindow(corner, targets) {
+  for (const w of targets) {
+    // 三角が窓から遠ければ見ない
+    let far = true, depth = 0;
+    const flat = [];
+    for (let k = 0; k < 3; k++) {
+      const dx = corner[k][0] - w.centre[0], dy = corner[k][1] - w.centre[1], dz = corner[k][2] - w.centre[2];
+      if (dx * dx + dy * dy + dz * dz < (w.radius + 0.35) * (w.radius + 0.35)) far = false;
+      const dn = dx * w.normal[0] + dy * w.normal[1] + dz * w.normal[2];
+      depth += dn / 3;
+      flat.push([dx * w.u[0] + dy * w.u[1] + dz * w.u[2],
+                 dx * w.v[0] + dy * w.v[1] + dz * w.v[2]]);
+    }
+    if (far || Math.abs(depth) > 0.20) continue;     // 反対側の面を消さないための厚みの制限
+    const [a, b, c] = flat;
+    const area = (b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1]);
+    if (Math.abs(area) < 1e-12) continue;
+    for (const [su, sv] of w.samples) {
+      const w1 = ((b[0] - su) * (c[1] - sv) - (c[0] - su) * (b[1] - sv)) / area;
+      const w2 = ((c[0] - su) * (a[1] - sv) - (a[0] - su) * (c[1] - sv)) / area;
+      const w3 = 1 - w1 - w2;
+      if (w1 >= -1e-6 && w2 >= -1e-6 && w3 >= -1e-6) return true;
+    }
+  }
+  return false;
+}
+
+// ── いまの塗装（紫と銀）にする ──────────────────────────────
+// 買った外装のテクスチャーは**古い塗装**（白地に aabar など）。TAICHI 2026-09-22 が送ってきた
+// 実機写真（銀白の上面／紫〜赤紫の下面と尾翼）に合わせる。
+// テクスチャーを描き直すのではなく、**面の向きと高さで塗り分ける**（TAICHI「別な方法でもいい」）。
+// 元のテクスチャーは**明暗だけ**使うので、パネルの線や文字は模様として残る。
+function paintLivery(mesh) {
+  const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  for (const material of list) {
+    if (!material || material.userData.liveryDone) continue;
+    material.userData.liveryDone = true;
+    material.metalness = 0.42;      // 実機の機首・ブームは鏡のような銀色
+    material.roughness = 0.28;
+    const axisY = D("exterior_y") + 0.04;      // 胴体の中心線の高さ
+    material.onBeforeCompile = (shader) => {
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>",
+                 "#include <common>\nvarying vec3 vLivPos;\nvarying vec3 vLivNrm;")
+        .replace("#include <beginnormal_vertex>",
+                 "#include <beginnormal_vertex>\n vLivNrm = normalize(mat3(modelMatrix) * objectNormal);")
+        .replace("#include <project_vertex>",
+                 "vLivPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\n#include <project_vertex>");
+      shader.fragmentShader = shader.fragmentShader
+        .replace("#include <common>",
+                 "#include <common>\nvarying vec3 vLivPos;\nvarying vec3 vLivNrm;")
+        .replace("#include <map_fragment>", [
+          "#include <map_fragment>",
+          "float lum = dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114));",
+          "float h = vLivPos.y - " + axisY.toFixed(3) + ";",
+          // ★**下を向く面**が紫。ただし**胴体の中心線より下だけ**に効かせる。
+          //   高さで止めないと、窓の縁（穴の内側を向いた面）まで紫になり、
+          //   外から見たとき窓のまわりに紫のにじみが出る（2026-09-22に実際そうなった）
+          "float down = smoothstep(0.05, -0.45, vLivNrm.y) * smoothstep(0.55, 0.20, h);",
+          "float belly = smoothstep(0.10, -0.45, h)",                  // 胴体の下半分だけ（翼には効かせない）
+          "            * smoothstep(1.9, 1.2, abs(vLivPos.z));",
+          "float fin  = smoothstep(0.40, 0.70, abs(vLivNrm.z))",       // 縦の尾翼
+          "           * smoothstep(3.2, 3.9, abs(vLivPos.z));",
+          "float p = clamp(max(max(down, belly), fin), 0.0, 1.0);",
+          "vec3 silver = vec3(0.87, 0.88, 0.91);",
+          // ★色は TAICHI 指定（2026-09-22・下面デカール図のカラー参考）
+          //   #3A00FF = (0.227, 0.0, 1.0)  #8A00FF = (0.541, 0.0, 1.0)
+          "vec3 deep   = vec3(0.055, 0.0, 0.30);",                     // 同じ色相の暗い方（下・後ろ）
+          "vec3 violet = vec3(0.227, 0.0, 1.0);",                      // 本体の紫 #3A00FF
+          "vec3 purple = mix(violet, deep, smoothstep(0.1, -1.1, h));",
+          // 尾翼は写真では**先が濃い藍紫・根元が赤紫**。胴体の紫より深い色を使う
+          "vec3 finTop  = vec3(0.227, 0.0, 1.0);",                     // 尾翼の先 #3A00FF
+          "vec3 finRoot = vec3(0.541, 0.0, 1.0);",                     // 尾翼の根元 #8A00FF
+          "vec3 finCol  = mix(finRoot, finTop, smoothstep(0.6, 2.1, h));",
+          "vec3 liv = mix(mix(silver, purple, p), finCol, clamp(fin, 0.0, 1.0));",
+          // ★**元の塗装とロゴを完全に消す**（TAICHI 2026-09-22「元々の3Dデータのロゴやカラーは
+          // 全部消してください。その上で、新しいカラーとロゴを乗っけてください」）。
+          // テクスチャーの色は一切使わず、新しい塗装の色だけにする。
+          // 凹凸・パネルの筋は Normal マップ（別ファイル）が持っているので、そちらは残る。
+          // 新しい文字は、この下の addDecals() が**別の板**として貼る。
+          "diffuseColor.rgb = liv;",
+        ].join("\n"));
+    };
+    material.needsUpdate = true;
+  }
+}
+
+// ── 新しい機体記号を貼る ─────────────────────────────────────
+// 元のテクスチャーを捨てたので、文字はこちらで作って**別の板**として貼る。
+// 会社のロゴの絵柄は**こちらで描き起こさない**（TAICHIが権利を持つ公式素材を貼るのが筋）。
+// ここで入れるのは、実機に書かれている**機体記号の文字だけ**。
+function textTexture(text, colour) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024; canvas.height = 256;
+  const g = canvas.getContext("2d");
+  g.clearRect(0, 0, canvas.width, canvas.height);
+  g.fillStyle = colour;
+  g.font = "600 150px Helvetica, Arial, sans-serif";
+  g.textAlign = "center"; g.textBaseline = "middle";
+  g.letterSpacing = "14px";
+  g.fillText(text, canvas.width / 2, canvas.height / 2 + 6);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+// 胴体の表面に沿った曲がった板を作る。半径は決め打ちにせず、**外から光線を当てて実際の面を測る**
+// （胴体は前後で太さが変わるので、決め打ちだと沈んだり浮いたりする。2026-09-22の失敗）
+// flipU=true … **絵柄を左右反対**にする。文字は「どちらの舷でも左から右に読める」向きでよいが、
+//   7機のロゴのように**向きのある絵**は、両舷とも**機首の方を向いて**いないとおかしい
+//   （TAICHI 2026-09-23「このロゴは左右反対に。ユニティの進行方向に合わせて」）。
+function hullDecal(texture, x0, x1, centreAngleDeg, heightMetres, sign, targets, flipU) {
+  const axisY = D("exterior_y") + 0.04;
+  const cols = 28, rows = 4;
+  const centre = centreAngleDeg * Math.PI / 180;
+  const raycaster = new THREE.Raycaster();
+  const geometry = new THREE.BufferGeometry();
+  const position = [], uv = [], index = [];
+  const halfAngle = (heightMetres / 2) / 1.3;          // おおよその角度の半分
+  for (let r = 0; r <= rows; r++) {
+    const a = centre - halfAngle + (2 * halfAngle) * (r / rows);
+    for (let c = 0; c <= cols; c++) {
+      const t = c / cols;
+      const x = x0 + (x1 - x0) * t;
+      const dir = new THREE.Vector3(0, Math.sin(a), sign * Math.cos(a));
+      const from = new THREE.Vector3(x, axisY, 0).add(dir.clone().multiplyScalar(4));
+      raycaster.set(from, dir.clone().negate());
+      const hit = raycaster.intersectObjects(targets, false)[0];
+      const point = hit ? hit.point.clone().add(dir.clone().multiplyScalar(0.004))
+                        : new THREE.Vector3(x, axisY, 0).add(dir.clone().multiplyScalar(1.31));
+      position.push(point.x, point.y, point.z);
+      // 貼り付け座標の向き（2026-09-22に上下左右とも逆になっていた）。
+      // v は「胴体の上側＝1」。r=0 が下なので v = r/rows。1-r/rows にすると文字が上下逆になる。
+      // u は左舷（+Z側）が t、右舷（−Z側）が 1-t で、外から見て左から右に読める。
+      // 文字は「どちらの舷でも左から右に読める」＝舷で向きを変える。
+      // 向きのある絵（7機のロゴ）は**どちらの舷でも機首の方を向く**＝舷によらず同じ向き。
+      //   機首は −X 側＝ t=0 の側なので、絵の先頭（u=1）を t=0 に置く
+      const u = flipU ? (1 - t) : (sign > 0 ? t : 1 - t);
+      uv.push(u, r / rows);
+    }
+  }
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const a = r * (cols + 1) + c, b = a + 1, d = a + cols + 1, e = d + 1;
+    index.push(a, d, b, b, d, e);
+  }
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  geometry.setIndex(index);
+  geometry.computeVertexNormals();
+  const material = new THREE.MeshStandardMaterial({
+    map: texture, transparent: true, roughness: 0.35, metalness: 0.0,
+    depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4,
+    side: THREE.DoubleSide });
+  return new THREE.Mesh(geometry, material);
+}
+
+// ★文字の板は**世界座標で作る**ので、回転も拡大もかかっていない入れ物に入れる。
+// 外装の入れ物（回転-90°・拡大1.277）に入れると二重に変換されて飛んでいく（2026-09-22の失敗）
+const decalGroup = new THREE.Group();
+scene.add(decalGroup);
+// 平らな面（尾翼の外面・主翼の下面）に貼る板。胴体と同じく**光線で面を測る**。
+// axis="z" … 尾翼（a=X, b=Y、横から当てる）／ axis="y" … 主翼の下面（a=X, b=Z、下から当てる）
+// ★only（任意）＝「この深さの範囲に、この向きで立っている面だけに貼る」。
+//   尾翼の署名で必要になった（TAICHI 2026-09-23「垂直尾翼のロゴが水平尾翼に引っかかって
+//   伸びている。水平尾翼がないと思って垂直尾翼に描いて」）。
+//   光線は**いちばん外の面**に当たるので、署名の下のほうが主翼（|Z|最大6.97）や
+//   水平尾翼（上を向いた面）に当たり、尾翼の面（|Z|≒4.4）との間が長く引き伸ばされていた。
+//   ここで「深さが範囲外」「面が横を向いていない」当たりを捨て、
+//   捨てた所は**採用した当たりの深さの中央値**の平らな面に置く（尾翼の面そのもの）。
+//   そうすると水平尾翼は**ただ手前に重なるだけ**になり、実機と同じ見え方になる。
+function planeDecal(texture, axis, a0, a1, b0, b1, sign, targets, across, only) {
+  // ★網目の細かさ。across=true（下面のロゴ）では**文字の横方向が rows**になるので、
+  //   rows=6 だと GALACTIC の8文字を7点で表すことになり、字が欠けて見えた
+  //   （TAICHI 2026-09-23 の下面の絵で判明）。26×16 にして字の形が出るようにした
+  const cols = 26, rows = 16;
+  const ray = new THREE.Raycaster();
+  const position = [], uv = [], index = [];
+  const normalMatrix = new THREE.Matrix3();
+  const raw = [];                                   // 1回目：当たりを集める
+  for (let r = 0; r <= rows; r++) {
+    const b = b0 + (b1 - b0) * (r / rows);
+    for (let c = 0; c <= cols; c++) {
+      const a = a0 + (a1 - a0) * (c / cols);
+      let from, dir;
+      if (axis === "z") { from = new THREE.Vector3(a, b, sign * 11); dir = new THREE.Vector3(0, 0, -sign); }
+      else              { from = new THREE.Vector3(a, -7, b);        dir = new THREE.Vector3(0, 1, 0); }
+      ray.set(from, dir);
+      let hit = null;
+      for (const candidate of ray.intersectObjects(targets, false)) {
+        if (!only) { hit = candidate; break; }
+        const depth = Math.abs(axis === "z" ? candidate.point.z : candidate.point.y);
+        if (depth < only.near || depth > only.far) continue;       // 深さが範囲外
+        if (candidate.face) {                                      // 面の向きを世界座標で見る
+          normalMatrix.getNormalMatrix(candidate.object.matrixWorld);
+          const n = candidate.face.normal.clone().applyMatrix3(normalMatrix).normalize();
+          if (Math.abs(axis === "z" ? n.z : n.y) < (only.facing || 0.45)) continue;
+        }
+        hit = candidate; break;
+      }
+      raw.push({ a: a, b: b, hit: hit, dir: dir });
+    }
+  }
+  // 捨てた所に使う深さ＝採用した当たりの**中央値**（尾翼の面の深さ）
+  const depths = raw.filter((x) => x.hit).map((x) => Math.abs(axis === "z" ? x.hit.point.z : x.hit.point.y)).sort((p, q) => p - q);
+  const flat = depths.length ? depths[Math.floor(depths.length / 2)]
+                             : (axis === "z" ? 4.42 : 0.30);
+  for (let r = 0; r <= rows; r++) {
+    for (let c = 0; c <= cols; c++) {
+      const t = c / cols;
+      const item = raw[r * (cols + 1) + c];
+      const a = item.a, b = item.b, hit = item.hit, dir = item.dir;
+      // 面から少し浮かす。**下面は 20mm**：外装モデルは脚の扉のつなぎ目の板が
+      // 数mm出っ張っていて、6mm だと文字がその板に隠れて欠けて見えた
+      // （TAICHI 2026-09-23「2本黒い線が入っててロゴが消えているように見える」）
+      const lift = dir.clone().multiplyScalar(axis === "y" ? -0.020 : -0.006);
+      const point = hit ? hit.point.clone().add(lift)
+                        : (axis === "z" ? new THREE.Vector3(a, b, sign * flat)
+                                        : new THREE.Vector3(a, -flat, b));
+      position.push(point.x, point.y, point.z);
+      // across=true のときは**文字が機軸と直角**に読める向きにする（下面のロゴ）。
+      // 下から見上げると、文字の左→右は「左舷(+Z)→右舷(−Z)」、下→上は「機尾→機首」
+      uv.push(across ? r / rows : (sign > 0 ? t : 1 - t), across ? t : r / rows);
+    }
+  }
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const a = r * (cols + 1) + c, b = a + 1, d = a + cols + 1, e = d + 1;
+    index.push(a, d, b, b, d, e);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(position, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  geometry.setIndex(index);
+  geometry.computeVertexNormals();
+  const material = new THREE.MeshStandardMaterial({
+    map: texture, transparent: true, roughness: 0.35, metalness: 0.0,
+    depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, side: THREE.DoubleSide });
+  return new THREE.Mesh(geometry, material);
+}
+
+function addDecals(group) {
+  const purple = "#4b2a86";
+  const targets = [];
+  group.traverse((o) => { if (o.isMesh && o.name === "body") targets.push(o); });
+  group.updateMatrixWorld(true);
+  // TAICHI提供のロゴ画像（2026-09-22）。**こちらで描き起こしたものではなく、いただいた画像そのもの**。
+  // 元は1枚の縦組み（マーク＋GALACTIC）。透明の背景が入っていたので、上下に切り分けて使う。
+  // 正本: references/10_ロゴ/virgin_galactic_lockup.webp
+  // 文字も**TAICHI提供のデカールシートから切り出した本物の書体**を使う
+  // （画面で描いた文字はやめた）。正本: references/10_ロゴ/decal_sheet.jpg
+  const loader = new THREE.TextureLoader();
+  const pick = (name) => {
+    const t = loader.load("model/textures/" + name + ".png");
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+    return t;
+  };
+  const art = {
+    // 尾翼に貼るのは**Virgin の署名だけ**（実機写真）。ロケットの縦組みロゴは機体には付かない。
+    // 実機は紫の尾翼に**白い署名**なので、色を白にしたものを使う（形はいただいた絵柄のまま）
+    // ★「✕」印を取り除いた署名（TAICHI 2026-09-22「Virginのロゴの後ろのxみたいなのは
+    //   関係ないので消して」）。実機の尾翼にあるのは**署名だけ**。
+    //   作り方: 透明度のかたまりに分けて、右上の大きな塊（✕）と1〜4画素の点（元画像のノイズ）を消す
+    mark:     pick("decal_virgin_sig_white"),    // 115×112  Virgin の署名（白・✕なし）
+    // 主翼の下面は紫なので、GALACTIC は**白**（紫のままだと紫の上に紫で読めない。2026-09-22）
+    galactic: pick("decal_galactic_white"),      // 283×59   GALACTIC（白）
+    unity:    pick("decal_vss_unity"),    // 225×38   VSS UNITY
+    // ★N202VG の色は**黒**（TAICHI 2026-09-23「N202VGの文字は黒にしてください」）。
+    //   模型のブームはその辺りが紫なので、紫の文字（decal_n202vg.png）では読めなかった。
+    //   形（アルファ）は元の絵柄のまま、色だけ黒に塗り替えたもの。白版・紫版も残してある
+    reg:      pick("decal_n202vg_black"), // 130×38   N202VG（黒）
+    // ★VSS UNITY の**機首側**にあるのは「矢印」ではなく**7機のロゴ**だった
+    //   （TAICHI 2026-09-23 が4枚目の絵で教えてくれた）。縦並びの絵を90度回して横並びにしてある
+    fleet:    pick("decal_fleet"),        // 397×62   7機のロゴ
+  };
+  // ★位置は**シートの番号ではなく、TAICHI提供の実機写真**で決めた
+  // （TAICHI 2026-09-22「この番号とかはかなり間違っているので、自分で考えて、
+  //  使えるものを正しい位置に使ってください」）。写真から読んだ実機の配置：
+  //   ・胴体の横（窓の列のすぐ下）… VSS UNITY ＋ 矢印の列
+  //   ・尾翼の外面（上の方）……… Virgin の署名
+  //   ・尾翼の外面（下の前より）… N202VG
+  //   ・主翼の下面………………… GALACTIC
+  // ロケットのマーク（縦組みのロゴ）は**実機の機体には無い**ので貼らない。
+  const wings = [];
+  group.traverse((o) => { if (o.isMesh && o.name === "wings") wings.push(o); });
+  const hull = (texture, x0, angle, h, aspect, sign, flipU) =>
+    decalGroup.add(hullDecal(texture, x0, x0 + h * aspect, angle, h, sign, targets, flipU));
+  for (const sign of [1, -1]) {
+    // ★位置は**実機写真（飛行中）＋遠近を含む式**で出した（2026-09-23）。
+    //   写真は斜めから撮っているので、単純な比では合わない。
+    //   X = (a*x + b)/(c*x + 1) の3つの数を、分かっている3点で解いた：
+    //     写真 x=487 ↔ 機首 X=-1.38 ／ x=455 ↔ コックピット外側の窓 X=-0.61 ／
+    //     x=35 ↔ 翼の最後尾 X=15.16
+    //   裏取り：この式で客室の窓4つを換算すると X 0.49〜2.83（模型の実測 0.58〜3.12）、
+    //   コックピットの窓は -0.85〜-0.44（実測 -0.92〜-0.33）＝ずれ 0.1〜0.3m
+    // VSS UNITY：写真 x 325〜375 → X 1.50〜2.98（長さ1.48m）
+    // ★上下の位置（胴体の中心線からの角度）。★TAICHI 2026-09-23「もう少し下にずらしたほうがいい」
+    //   （【A格】references/taichi_20260923/側面_実機_VSS_UNITYの位置_20260923.png）→ 6° → **2°**（約9cm下）
+    //   さらに「もう10cmくらい下」→ 2° → **-2.5°**（1°≒2.3cm）。
+    //   前後は TAICHI 2026-09-23「VSSが一番後ろの窓の下、7つのロゴは前の窓の下からさらに前へ」：
+    //   客室の下の窓は X=0.596 / 1.853 / 3.133。VSS（文字の後ろ端）が 3.13 に来るように x0=1.65
+    hull(art.unity, 1.65, -2.5, 1.48 / (225 / 38), 225 / 38, sign);
+    // 7機のロゴ：写真 x 378〜420 → X 0.28〜1.42（長さ1.14m）
+    // 7機のロゴ：後ろ端 1.50（VSS UNITY のすぐ前）から前へ 1.14m ＝ X 0.36〜1.50。
+    //   前の窓（X=0.596）の下を通って、さらに機首側まで伸びる
+    //   ★7機のロゴだけ**左右を反対**にする（機首の方を向かせる。TAICHI 2026-09-23）
+    hull(art.fleet, 0.36, -2.5, 1.14 / (397 / 62), 397 / 62, sign, true);
+    // ★N202VG は**胴体には無い**（TAICHI 2026-09-23「胴体の方は決して、この写真のように
+    //   翼の方に書いてください」）。実機写真では**尾翼の前のブーム（翼）の外側**に入る。
+    //   なので hull（胴体）ではなく planeDecal（翼）で貼る → 下の尾翼の署名と同じ並びに置く
+    // 尾翼の外面（Z≒±4.42・X 8.5〜15・Y 0.5〜2.5 を光線で実測）に**白い署名**。
+    // 水平尾翼より上に置く（下げると隠れる）
+    // 切り出し直して 163×122 になったので、長さを比に合わせる（0.82 × 163/122 = 1.10）
+    // 比は 115:112。いただいた側面図では**尾翼のほぼ全面**なので、高さ1.90m・幅1.95m にする
+    // （尾翼は X 8.5〜15・Y 0.5〜2.5。高さの95%を使う）
+    // ★尾翼の署名も**側面図から実測**（TAICHI 2026-09-23「2枚目・3枚目くらいの大きさ」）。
+    //   図の尾翼 x 10〜150・ロゴ x 55〜145 / y 55〜135 → X 9.57〜11.09・Y 0.46〜1.94。
+    //   TAICHI「水平尾翼のところは突き抜けて大丈夫」＝水平尾翼は気にしない
+    // ★尾翼の署名。**模型の垂直尾翼の実寸は X 10.14〜15.16・Y 1.52〜2.97**（GLBを測った）。
+    //   前は X 9.57〜11.09・Y 0.46〜1.94 で、**尾翼より前・下に外れていた**（2026-09-23）。
+    //   写真ではロゴが尾翼の高さの65%を占める → 高さ1.30m・幅1.34m（絵の比 115:112）
+    // ★★2026-09-23 TAICHI「N202VGの位置と、尾翼のVirginのロゴの位置や大きさが違っている」
+    //   → **側面図（左舷）を画素で測り直して置き直した**。図と模型のつなぎは
+    //     **客室の窓3つの中心**（図 x=272.5/318.5/364.0 ↔ 模型 X=0.596/1.853/3.133）で
+    //     最小二乗で解いた：X = 1.8606 + 0.027738*(図のx - 318.333)
+    //     縦は同じ倍率（正投影の図なので）：Y = 1.118 - 0.027738*(図のy - 87.5)
+    //     裏取り：この式で尾翼の後ろの先は X=15.55（模型の実測 15.16）、窓の直径は
+    //     図で20.9画素の計算に対し実測19〜20画素 → ずれ数%。
+    //   署名：図 x 688〜778 / y 33〜112 → X 12.11〜14.61・Y 0.44〜2.63（幅2.50×高さ2.19）。
+    //   絵柄の比 115:112 を守るため、高さ2.19に合わせて幅は2.25にし、真ん中をそろえた。
+    //   前は 1.34×1.30 で**半分の大きさ**だった。水平尾翼は突き抜けてよい（TAICHI 2026-09-22）
+    // ★TAICHI 2026-09-23「垂直尾翼のVirginのロゴをあと80cm前に（左右とも）」→ 0.80 機首側へ、
+    //   そのあと「50cm戻して」→ 差し引き **0.30 機首側**（12.235→11.935）
+    decalGroup.add(planeDecal(art.mark, "z", 11.935, 14.185, 0.44, 2.63, sign, wings, false,
+                              { near: 3.9, far: 5.2, facing: 0.45 }));
+    // N202VG：写真 x 196〜240 → 尾翼の前縁のすぐ前のブームの外側（X 8.30〜9.15・高さ0.248m）
+    // N202VG：写真 x 196〜240 → 長さ**1.67m**（前の0.85mは小さすぎた）。
+    //   ブーム（模型の実測 X 7.10〜14.21・Y 0.21〜1.39）の上に置く
+    // N202VG：図 x 517〜582（文字だけ）/ y 117〜138 → X 7.37〜9.20（長さ1.83m）。
+    //   高さは絵柄の比 130:38 から 0.535m。真ん中は Y=0.01（図の y=127.5）＝**ブームの横の真ん中**。
+    //   前は Y 0.55〜1.04 で**ブームの上の端**に寄っていた（TAICHI 指摘）
+    decalGroup.add(planeDecal(art.reg, "z", 7.37, 9.20, -0.258, 0.277, sign, wings));
+  }
+  // ── 下面（TAICHI提供の資料 2026-09-22：下面デカール図＋実機写真）──
+  // ★下面は紫地に**大きな Virgin の筆記体＋その後ろに GALACTIC**が、
+  //   **機軸と直角に**（下から見上げて左右に読める向きで）入る。
+  //   前は GALACTIC を主翼の下面の左右に小さく貼っていた＝資料と違う
+  const belly = targets.concat(wings);
+  // Virgin の署名。絵柄の比 163:122 を守る（幅4.4m → 高さ3.28m）
+  // ★TAICHI 2026-09-23「下面の Virgin はもう少し前にずらして」→ 0.45m 機首側へ
+  // ★TAICHI 2026-09-23「Virginのロゴと GALACTIC の文字をあと2m前に」→ X を 2.0 機首側へ
+  const bellyMark = planeDecal(art.mark, "y", 4.60, 0.57, -2.20, 2.20, 1, belly, true,
+                               { near: 0.15, far: 1.30, facing: 0.35 });
+  decalGroup.add(bellyMark);
+  // GALACTIC。比 283:59。Virgin の後ろ（機尾より）。
+  // ★TAICHI 2026-09-23「GALACTICの文字が、ボディがない空間に書かれてしまっています」
+  //   → **下面の実測**（真下から光線を当てて調べた）：ボディが左右いっぱい（|Z|≦3.1）なのは
+  //     **X=8.2 まで**。X=8.3 から先は左右のブームの間の細い所（|Z|≦1.2）しかない。
+  //     前は X 7.95〜8.95・|Z|≦2.40 で、**後ろ半分が空中**に浮いていた。
+  //   いまは X 7.15〜8.10（高さ0.95）・|Z|≦2.28（＝0.95×283/59）。いただいたデカール図の
+  //   とおり Virgin のすぐ後ろに入り、全部がボディの上に乗る
+  const bellyGalactic = planeDecal(art.galactic, "y", 6.10, 5.15, -2.28, 2.28, 1, belly, true,
+                                   { near: 0.15, far: 1.30, facing: 0.35 });
+  decalGroup.add(bellyGalactic);
+  // ★下面は太陽も窓の光も当たらないので、**白い塗装が濃いグレーにしか見えなかった**
+  //   （TAICHI 2026-09-23 が実機の写真と並べて指摘）。実機の写真では白くはっきり読める。
+  //   そこで下面の2つだけ、絵柄そのものを**弱く自分で光らせる**（emissive）。
+  //   0＝そのまま／0.55＝いま／1.0 にすると光って見える
+  for (const mesh of [bellyMark, bellyGalactic]) {
+    mesh.material.emissive = new THREE.Color(0xffffff);
+    mesh.material.emissiveMap = mesh.material.map;
+    mesh.material.emissiveIntensity = 0.55;
+    mesh.material.needsUpdate = true;
+  }
+}
+
+// 前後の車輪（脚）。**飛行中は消す**（TAICHI 2026-09-22「飛行中は、前後の車輪消えるように」）。
+// 出すのは滑走路にいる2つの段階だけ
+const GEAR = /^(front1|left_chassis|right_chassis)/;
+function updateGear() {
+  if (!exteriorGroup) return;
+  // 車輪は**着陸のときだけ**（TAICHI 2026-09-22「着陸の時だけ表示、それ以外は起動時も含めて出さない」）。
+  // 「滑空して着陸」と「着陸後」の2つ。離陸前は母機イヴに吊られていて、自分の脚は出していない
+  const onGround = phase && (phase.id === "glide" || phase.id === "landed");
+  // ロケットの炎は**点火・上昇のときだけ**（TAICHI 2026-09-22）。
+  // 買った外装は炎が最初から付いたままだったので、Blenderで flame という別部品に切り出した
+  const burning = phase && phase.id === "boost";
+  exteriorGroup.traverse((child) => {
+    if (!child.isMesh) return;
+    if (GEAR.test(child.name)) child.visible = !!onGround;
+    else if (child.name === "flame") child.visible = !!burning;
+  });
+}
+// 外装を見せるかどうか。**中にいるときに出すかは設定で切り替え**（TAICHI 2026-09-22
+// 「設定で両方切り替えられるようにしてください」）。既定は「中では消す」
+function updateExteriorVisibility() {
+  if (!exteriorGroup) return;
+  // ★**内装と外装はいつもセット**（TAICHI 2026-09-23）。
+  //   前は「外から見る」以外の視点では自動で消していたので、
+  //   「外から機体全体を見る」を押しても機体が出ないように見えることがあった。
+  //   いまは **「外装（機体）」ボタンが on なら、どの視点でも出す**。消したいときはそのボタンで消す
+  exteriorGroup.visible = $("toggleExterior").classList.contains("on");
+  decalGroup.visible = exteriorGroup.visible;
+  updateGear();
+  if (window.__requestRender) window.__requestRender();
+}
+if (NO_EXTERIOR) {                      // 外装が入っていない版では、外装のボタンを出さない
+  $("toggleExterior").style.display = "none";
+  $("toggleExteriorInside").style.display = "none";
+}
+$("toggleExterior").addEventListener("click", (e) => {
+  const on = !e.target.classList.contains("on");
+  e.target.classList.toggle("on", on);
+  // ★失敗を握りつぶさない。`.catch(() => {})` にしていたせいで、外装の読み込みが
+  //   例外で止まっても画面には何も出ず、「ボタンは on なのに機体が出ない」となった（2026-09-22）
+  if (!exteriorGroup) {
+    loadExterior().then(() => updateExteriorVisibility())
+      .catch((error) => { console.error("外装の読み込みに失敗:", error); });
+    return;
+  }
+  updateExteriorVisibility();
+});
+$("toggleExteriorInside").addEventListener("click", (e) => {
+  e.target.classList.toggle("on", !e.target.classList.contains("on"));
+  updateExteriorVisibility();
+});
+
+$("toggleSky").addEventListener("click", (e) => {
+  sky.visible = !sky.visible;
+  updateWindowLights();
+  e.target.classList.toggle("on", sky.visible);
+});
+
+// ── 動かす（キーボード／指／ゲームパッド） ───────────────────
+const held = new Set();
+addEventListener("keydown", (e) => {
+  // 依頼を書いている間は動かない（前は、依頼欄に w a s d q e を打つと視点が動いた）
+  if (e.target.closest && e.target.closest("textarea, input, select")) return;
+  if (e.code === "KeyH" && !e.repeat) setPanels(!document.body.classList.contains("panelsHidden"));
+  held.add(e.key.toLowerCase());
+});
+addEventListener("keyup", (e) => held.delete(e.key.toLowerCase()));
+const forward = new THREE.Vector3(), side = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+function moveBy(ahead, across, lift) {
+  camera.getWorldDirection(forward);
+  forward.y = 0; forward.normalize();
+  side.crossVectors(forward, up).normalize();
+  const step = new THREE.Vector3()
+    .addScaledVector(forward, ahead).addScaledVector(side, across).addScaledVector(up, lift);
+  camera.position.add(step);
+  controls.target.add(step);
+}
+function keyboardStep(dt) {
+  const speed = (held.has("shift") ? 2.2 : 1.1) * dt;
+  let ahead = 0, across = 0, lift = 0;
+  if (held.has("w") || held.has("arrowup")) ahead += speed;
+  if (held.has("s") || held.has("arrowdown")) ahead -= speed;
+  if (held.has("d") || held.has("arrowright")) across += speed;
+  if (held.has("a") || held.has("arrowleft")) across -= speed;
+  if (held.has("e")) lift += speed;
+  if (held.has("q")) lift -= speed;
+  if (ahead || across || lift) moveBy(ahead, across, lift);
+}
+// ── 指の操作（スマホ・iPad）──────────────────────────────────
+// TAICHI 2026-09-18「ピンチイン・ピンチアウトや、指2本での動きなどが対応できていません。
+// 無重力のVRシミュレーターの動きを参考に、直してください」→ 無重力機（zerog_sim）と同じ作りにした。
+//   1本指＝見回す（OrbitControls）／2本指のピンチ＝前後（広げると前へ）／2本指のドラッグ＝上下・左右（画面をつかんで動かす向き）
+// 前の作りが効かなかった理由：①2本指の処理が「ページの拡大を止められない」設定（passive）で、
+// iPhone・iPad ではシミュレーターではなくページ全体が拡大された ②OrbitControls も2本指を自分で処理してぶつかった
+// ③ピンチと2本指ドラッグを分けずに同時に効かせ、動く向きも無重力機と逆だった
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.PAN };   // TWO は OrbitControls が扱わない値＝2本指はこちらで処理する
+renderer.domElement.style.touchAction = "none";                         // ブラウザ側の拡大・スクロールに取られないようにする
+const TOUCH_SPEED = 1.5;                                                  // 無重力機の既定の速さと同じ効き方
+// 見回しと平行移動の効き方も、無重力機のVR（zerog_sim）と同じ式にそろえる
+// （TAICHI 2026-09-22「トラックパッドでの動きのなめらかさ（スピード）を、無重力飛行機のVRと同じくらいに」）。
+// これまでは three の既定（どちらも1.0）で、**見回しが速すぎ・平行移動が遅すぎ**だった
+controls.rotateSpeed = 0.7 * Math.sqrt(TOUCH_SPEED);   // = 0.857。速すぎると酔う
+controls.panSpeed = TOUCH_SPEED;                       // = 1.5
+let fingers = null;
+function twoFingers(touches) {
+  const [a, b] = touches;
+  return { gap: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY),
+           x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+}
+renderer.domElement.addEventListener("touchstart", (event) => {
+  if (event.touches.length === 2) { fingers = twoFingers(event.touches); event.preventDefault(); }
+}, { passive: false });
+renderer.domElement.addEventListener("touchmove", (event) => {
+  if (event.touches.length !== 2) return;
+  event.preventDefault();                                  // 2本指はページの拡大に使わせない
+  const now = twoFingers(event.touches);
+  if (!fingers) { fingers = now; return; }
+  const pinch = now.gap - fingers.gap;                     // 指を広げると＋＝前へ
+  const dx = now.x - fingers.x, dy = now.y - fingers.y;
+  const limit = (value) => Math.max(-0.4, Math.min(0.4, value));
+  // 効き方：指を150pxほど広げて約0.9m前へ。強すぎると狭い機内では一気に突き抜ける
+  if (Math.abs(pinch) > Math.hypot(dx, dy)) moveBy(limit(pinch * 0.004 * TOUCH_SPEED), 0, 0);
+  else moveBy(0, limit(-dx * 0.003 * TOUCH_SPEED), limit(dy * 0.003 * TOUCH_SPEED));   // 指を右へ動かすと景色が右へ（自分は左へ）、指を下へ動かすと自分は上へ
+  fingers = now;
+}, { passive: false });
+const clearFingers = (event) => { if (event.touches.length < 2) fingers = null; };
+renderer.domElement.addEventListener("touchend", clearFingers);
+renderer.domElement.addEventListener("touchcancel", clearFingers);
+// ── トラックパッド・マウス（TAICHI 2026-09-22「トラックパッドでピンチイン、ピンチアウトができません」）──
+// 無重力機（zerog_sim）と同じ作り。**この処理が丸ごと抜けていた**のが原因で、
+// 指の操作（touchstart/touchmove）はスマホ・iPad用で、Macのトラックパッドには効かない。
+//   ピンチ＝ctrlKey つきの wheel（Chrome・Edge・Firefox）／2本指のスクロール＝ふつうの wheel
+renderer.domElement.addEventListener("wheel", (event) => {
+  event.preventDefault();                                  // ページ全体の拡大・スクロールに取られない
+  const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 400 : 1;
+  const limit = (value) => Math.max(-0.6, Math.min(0.6, value));
+  if (event.ctrlKey) {                                     // ピンチ：前後。広げると前へ
+    moveBy(limit(-event.deltaY * unit * 6 * 0.004 * TOUCH_SPEED), 0, 0);
+  } else {                                                 // 2本指のスクロール：上下は縦に、左右は横に
+    // ★上下だけ向きが逆だった（TAICHI 2026-09-23「左右の動きと上下の動きで反応が逆」）。
+    //   指の操作（touchmove）は**画面をつかんで動かす向き**（指を下へ＝景色も下へ）。
+    //   トラックパッドの wheel は、指を上へ動かすと deltaY が＋になるので、
+    //   そのまま lift に入れると「指を上へ＝景色は下へ」で左右と食い違っていた。
+    //   指の操作と同じにするため **deltaY の符号を反転**する（左右はもともと合っている）
+    const scale = 0.004 * TOUCH_SPEED;
+    moveBy(0, limit(event.deltaX * unit * scale), limit(-event.deltaY * unit * scale));
+  }
+}, { passive: false });
+// macOS の Safari は、トラックパッドのピンチを wheel ではなく gesture の出来事で知らせる。
+// gesturestart を止めるだけだと**ピンチが何も起きない**ので、ここで前後に使う
+let gestureScale = 1;
+addEventListener("gesturestart", (event) => { event.preventDefault(); gestureScale = event.scale || 1; });
+addEventListener("gesturechange", (event) => {
+  event.preventDefault();
+  const scale = event.scale || 1;
+  const step = Math.max(-0.6, Math.min(0.6, (scale - gestureScale) * 3.0 * TOUCH_SPEED));
+  gestureScale = scale;
+  if (step) moveBy(step, 0, 0);                            // 広げると前へ
+}, { passive: false });
+addEventListener("gestureend", (event) => { event.preventDefault(); gestureScale = 1; }, { passive: false });
+function gamepadStep(dt) {
+  const pad = navigator.getGamepads && navigator.getGamepads()[0];
+  if (!pad) return;
+  const dead = (v) => (Math.abs(v) < 0.15 ? 0 : v);
+  const ahead = -dead(pad.axes[1]) * 1.4 * dt, across = dead(pad.axes[0]) * 1.4 * dt;
+  if (ahead || across) moveBy(ahead, across, 0);
+  const lookX = dead(pad.axes[2] || 0) * 1.6 * dt, lookY = dead(pad.axes[3] || 0) * 1.2 * dt;
+  if (lookX || lookY) {
+    const offset = camera.position.clone().sub(controls.target);
+    const spherical = new THREE.Spherical().setFromVector3(offset);
+    spherical.theta -= lookX; spherical.phi = Math.max(0.05, Math.min(Math.PI - 0.05, spherical.phi + lookY));
+    camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(spherical));
+  }
+}
+
+// ── 設定のパネルの開け閉め（どの幅でも同じ決まり） ─────────────
+// 前は、パソコンの幅だとパネルが出たままで閉じる手段が無かった（TAICHI 2026-09-18）
+function setPanels(hidden) {
+  document.body.classList.toggle("panelsHidden", hidden);
+}
+$("menu").addEventListener("click", (e) => { e.stopPropagation(); setPanels(false); });
+$("close").addEventListener("click", () => setPanels(true));
+$("panelClose").addEventListener("click", () => setPanels(true));
+// **パネルの外（VRの画面など）に触れても閉じる**（TAICHI 2026-09-22
+// 「閉じるのボタンは残しつつ、ウィンドウの外側をタッチしたら閉じるように」）。
+// パネルの中（ゲージ・ボタン・入力）に触れたときは閉じない。指でもマウスでも同じ（pointerdown）
+addEventListener("pointerdown", (event) => {
+  if (document.body.classList.contains("panelsHidden")) return;   // もう閉じている
+  const inside = event.target.closest && event.target.closest("#timeline, #head, #sheet, #menu");
+  if (!inside) setPanels(true);
+}, true);
+
+// 幅900px以下（スマホ・iPadの縦）は、2枚のパネルを1枚のシートにまとめる。広い画面では四隅に戻す
+// （前はシートに移したまま戻さなかったので、幅を広げると ✕ だけが左上に残っていた）
+const narrow = matchMedia("(max-width: 900px)");
+let lastNarrow = null;
+function applyLayout() {
+  if (narrow.matches === lastNarrow) return;             // 幅の区分が変わったときだけ並べ替える
+  lastNarrow = narrow.matches;
+  if (narrow.matches) {
+    $("sheetBody").append($("head"), $("timeline"));
+  } else {
+    document.body.append($("head"), $("timeline"));
+  }
+  $("sheet").hidden = !narrow.matches;
+}
+narrow.addEventListener("change", applyLayout);
+addEventListener("resize", applyLayout);                  // change が来ない場合（表示の切り替えなど）にも拾う
+applyLayout();
+
+// ── 案内 ─────────────────────────────────────────────────────
+$("hint").innerHTML =
+  "寸法の出どころ：" + data.dimensions.windows_total.confidence + " など全" +
+  Object.keys(data.dimensions).length + "件に、信頼度と出典を付けています。<br>" +
+  "<b>VSS Unity は2024年に退役していて、新しい実測は取れません。</b>" +
+  "だから寸法は『実写に重ねて確かめる』しかありません（上の「実写と見くらべる」）。";
+
+// ── AIへの依頼（アプリの画面とチャットで1つの一覧。二重管理にしない） ──
+// 公開する版では出さない（サーバーに書き込む機能なので）
+if (!PUBLIC_SITE) {
+  $("ask").hidden = false;
+  const STATUS_MARK = { "未対応": "・", "対応中": "…", "対応済み": "✓", "取り下げ": "×" };
+  async function refreshAsk() {
+    try {
+      const list = (await fetch("api/requests").then((r) => r.json())).requests || [];
+      $("askList").innerHTML = list.slice(0, 12).map((item) =>
+        '<div class="ask-item"><b>' + (STATUS_MARK[item.status] || "・") + "</b> " +
+        escapeHtml(item.text) +
+        (item.reply ? '<br><span style="color:#1f4e79">→ ' + escapeHtml(item.reply) + "</span>" : "") +
+        "</div>").join("") || '<div class="ask-item">まだ依頼はありません</div>';
+    } catch (error) {
+      $("askList").innerHTML = '<div class="ask-item">一覧を読めません（サーバー経由で開いてください）</div>';
+    }
+  }
+  function escapeHtml(text) {
+    return String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  }
+  $("askSend").addEventListener("click", async () => {
+    const text = $("askText").value.trim();
+    if (!text) return;
+    $("askMsg").textContent = "送っています…";
+    try {
+      const reply = await fetch("api/requests", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) }).then((r) => r.json());
+      if (reply.error) throw new Error(reply.error);
+      $("askText").value = "";
+      $("askMsg").textContent = "送りました";
+      refreshAsk();
+    } catch (error) {
+      $("askMsg").textContent = "送れませんでした：" + error.message;
+    }
+  });
+  refreshAsk();
+  setInterval(refreshAsk, 20000);
+}
+
+// ── 毎コマ ───────────────────────────────────────────────────
+let last = performance.now();
+let mirrorAge = 0;
+$("safetyNote").innerHTML = bold(data.safety_note);
+setPhase(data.phases[0]);
+goTo("seat_port_2");
+refreshMirror();                 // 材質と光がそろってから、ミラーの映り込みを1回作る
+// ★**動きがないときは描かない**（TAICHI 2026-09-23「ブラウザーで立ち上げると重くなる」）。
+//   前は毎秒60回ずっと描いていたので、見ているだけでもCPUとGPUを食い続けていた。
+//   ・画面が隠れている（別のタブ・別のアプリ）ときは完全に休む
+//   ・カメラが動いた／段階が変わった／鏡を撮り直すときだけ描く
+//   ・VR（ヘッドセット）のときは常に描く（必要なので）
+let needsRender = true;
+let idleFrames = 0;
+const requestRender = () => { needsRender = true; idleFrames = 0; };
+window.__requestRender = requestRender;
+controls.addEventListener("change", requestRender);
+addEventListener("focus", requestRender);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) requestRender(); });
+renderer.setAnimationLoop(() => {
+  const now = performance.now();
+  const dt = Math.min((now - last) / 1000, 0.1);
+  last = now;
+  if (document.hidden && !renderer.xr.isPresenting) return;     // 隠れていれば何もしない
+  if (!renderer.xr.isPresenting) {
+    const before = camera.position.clone();
+    keyboardStep(dt); gamepadStep(dt); controls.update();
+    if (!before.equals(camera.position)) requestRender();
+  } else {
+    requestRender();
+  }
+  if (mirrorDirty) { refreshMirror(); mirrorDirty = false; mirrorAge = 0; requestRender(); }
+  if (!needsRender) {
+    // ★念のための保険：止まっていても**0.5秒に1回だけ**描く。
+    //   ボタンや読み込みの合図を拾い漏らしても、半秒で画面に出る。
+    //   それでも毎秒60回→2回なので、負荷は30分の1になる
+    if (++idleFrames < 30) return;
+    idleFrames = 0;
+  }
+  needsRender = false;
+  renderer.render(scene, camera);
+});
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// 動作確認用の取っ手。画面が隠れているときでも、外から1コマ描かせて絵を取り出せる
+// （Claude のブラウザーのパネルが閉じていると、ふつうの画面写真が撮れないため）
+window.__sim = { THREE, renderer, scene, camera, controls, root, sky, goTo, setPhase, data, led, setLed, applyLed,
+  refreshMirror, mirrorRT, M, loadTripoSeat, tripoGroup,
+  shot(width = 1280, height = 720) {
+    const before = [renderer.domElement.width, renderer.domElement.height];
+    renderer.setSize(width, height, false);
+    camera.aspect = width / height; camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+    const url = renderer.domElement.toDataURL("image/jpeg", 0.85);
+    renderer.setSize(before[0], before[1], false);
+    camera.aspect = before[0] / before[1]; camera.updateProjectionMatrix();
+    return url;
+  } };
+</script>
+</body>
+</html>
